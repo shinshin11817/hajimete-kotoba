@@ -8,7 +8,8 @@
 <meta content="yes" name="apple-mobile-web-app-capable">
 <meta content="yes" name="mobile-web-app-capable">
 <meta content="はじめてのことば" name="apple-mobile-web-app-title">
-<title>はじめてのことば v0.2</title>
+<meta content="notranslate" name="google">
+<title>はじめてのことば v0.2.1</title>
 <style>
 :root{
   --bg:#FFF6EE; --card:#FFFFFF; --ink:#3B2F2A; --sub:#8A7A72; --line:#F0E2D6;
@@ -32,6 +33,9 @@ button{cursor:pointer;border:none;background:none}
 .memwarn{display:none;margin:0 18px 6px;background:#FFF1C9;color:#7A5A00;border-radius:14px;padding:10px 14px;font-size:12px;line-height:1.6}
 .memwarn.show{display:block}
 .memwarn button{color:#7A5A00;font-weight:800;text-decoration:underline;font-size:12px;padding:0}
+#errBox{display:none;margin:0 18px 8px;background:#FDE2E0;color:#8A1F17;border-radius:14px;padding:10px 14px;font-size:12px;line-height:1.6}
+#errBox pre{white-space:pre-wrap;word-break:break-all;margin:6px 0 0;font-size:11px;font-family:ui-monospace,Menlo,monospace}
+#errBox button{margin-top:6px;font-size:12px;font-weight:800;color:#8A1F17;text-decoration:underline;padding:0}
 main{flex:1;padding:6px 18px calc(110px + var(--safe-b))}
 .screen{display:none;animation:fade .25s ease}
 .screen.active{display:block}
@@ -158,35 +162,49 @@ main{flex:1;padding:6px 18px calc(110px + var(--safe-b))}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .storage-bar{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin-top:8px}
 .storage-bar i{display:block;height:100%;background:var(--green);width:0}
-/* diagnostics */
 .diag{list-style:none;margin:10px 0 0;padding:0}
 .diag li{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;line-height:1.5}
 .diag li:last-child{border-bottom:none}
 .diag .st{flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff}
 .st.ok{background:var(--green)} .st.ng{background:var(--danger)} .st.warn{background:#F5B400} .st.info{background:#B5A69D}
 .diag b{display:block}
-.diag small{color:var(--sub);word-break:break-all}
+.diag small{color:var(--sub);word-break:break-all;white-space:pre-wrap}
 .diag-advice{background:var(--accent-l);border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.7;margin-top:12px}
-.diag-raw{width:100%;min-height:120px;font-family:ui-monospace,Menlo,monospace;font-size:11px;border:1.5px solid var(--line);border-radius:12px;padding:10px;margin-top:10px;background:#fff}
+.diag-raw{width:100%;min-height:140px;font-family:ui-monospace,Menlo,monospace;font-size:11px;border:1.5px solid var(--line);border-radius:12px;padding:10px;margin-top:10px;background:#fff}
 :focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 </style>
+<script>
+/* v0.2.1：アプリ本体より先に読み込み、どんなエラーも行番号付きで画面に出す */
+window.__errs = [];
+window.__pushErr = function (msg) {
+  window.__errs.push(msg);
+  if (window.__errs.length > 12) window.__errs.shift();
+  var box = document.getElementById('errBox');
+  if (box) { box.style.display = 'block'; var pre = box.querySelector('pre'); if (pre) pre.textContent = window.__errs.join('\n'); }
+};
+window.addEventListener('error', function (ev) {
+  if (!ev || (!ev.message && !ev.error)) return;
+  var e = ev.error;
+  var line = ev.lineno ? '（' + ev.lineno + '行目' + (ev.colno ? ':' + ev.colno : '') + '）' : '';
+  window.__pushErr('[script] ' + (e && e.name ? e.name + ': ' : '') + (e && e.message ? e.message : ev.message) + line);
+});
+</script>
 </head>
-<body>
+<body translate="no">
 <div id="app">
   <header class="topbar">
     <button aria-label="戻る" id="btnBack" class="back"><svg stroke-linejoin="round" stroke-linecap="round" stroke-width="2.6" stroke="currentColor" fill="none" viewBox="0 0 24 24" height="20" width="20"><path d="M15 18l-6-6 6-6"></path></svg></button>
     <h1>はじめてのことば</h1>
-    <span class="ver">v0.2</span>
+    <span class="ver">v0.2.1</span>
   </header>
+  <div id="errBox"><b>エラー詳細（この内容を送ってください）</b><pre></pre><button id="errClose" type="button">閉じる</button></div>
   <div id="memWarn" class="memwarn">⚠️ この端末では保存領域が使えないため、<b>一時保存モード</b>で動いています。ページを閉じると記録は消えます。 <button data-go="diag" type="button">原因を見る</button></div>
 
   <main>
-    
     <section id="scr-loading" class="screen active">
       <div class="empty"><span class="big">⏳</span>起動しています…</div>
     </section>
 
-    
     <section id="scr-onboard" class="screen">
       <div class="ob-hero">
         <div class="bubble">💬</div>
@@ -204,7 +222,6 @@ main{flex:1;padding:6px 18px calc(110px + var(--safe-b))}
       <button data-go="diag" class="textlink">動作環境をチェックする</button>
     </section>
 
-    
     <section id="scr-home" class="screen">
       <div class="hero">
         <div id="hName" class="name">—</div>
@@ -232,7 +249,6 @@ main{flex:1;padding:6px 18px calc(110px + var(--safe-b))}
       <div id="recentList"></div>
     </section>
 
-    
     <section id="scr-record" class="screen">
       <div id="recMsg"></div>
       <div id="recStage" class="rec-stage"></div>
@@ -254,7 +270,6 @@ main{flex:1;padding:6px 18px calc(110px + var(--safe-b))}
       </div>
     </section>
 
-    
     <section id="scr-form" class="screen">
       <div id="formMedia"></div>
       <label for="fWord" class="label">なんて言った？</label>
@@ -275,7 +290,6 @@ main{flex:1;padding:6px 18px calc(110px + var(--safe-b))}
       <button style="margin-top:22px" id="btnSave" class="btn btn-primary">保存する</button>
     </section>
 
-    
     <section id="scr-timeline" class="screen">
       <input style="margin-bottom:10px" placeholder="🔍 ことばを探す" id="tlSearch" class="input">
       <div id="tlFilters" class="tl-filters">
@@ -290,7 +304,6 @@ main{flex:1;padding:6px 18px calc(110px + var(--safe-b))}
       <div id="tlList"></div>
     </section>
 
-    
     <section id="scr-settings" class="screen">
       <div class="card">
         <b>お子さま</b>
@@ -312,10 +325,9 @@ main{flex:1;padding:6px 18px calc(110px + var(--safe-b))}
         <button style="margin-top:12px" data-go="diag" class="btn btn-ghost">動作環境チェック</button>
         <button style="margin-top:10px" id="stReset" class="btn btn-danger">すべての記録を削除</button>
       </div>
-      <p style="text-align:center;margin-top:20px" class="muted">はじめてのことば v0.2 prototype</p>
+      <p style="text-align:center;margin-top:20px" class="muted">はじめてのことば v0.2.1 prototype</p>
     </section>
 
-    
     <section id="scr-diag" class="screen">
       <div class="card">
         <b>動作環境チェック</b>
@@ -365,15 +377,53 @@ main{flex:1;padding:6px 18px calc(110px + var(--safe-b))}
 <script>
 (function () {
 'use strict';
-var APP_VERSION = '0.2';
-var $ = function (s, el) { return (el || document).querySelector(s); };
-var $$ = function (s, el) { return Array.prototype.slice.call((el || document).querySelectorAll(s)); };
+var APP_VERSION = '0.2.1';
+
+var missingEls = [];
+function $opt(s, el) { try { return (el || document).querySelector(s); } catch (e) { return null; } }
+function $(s, el) {
+  var r = $opt(s, el);
+  if (!r) {
+    if (missingEls.indexOf(s) < 0) { missingEls.push(s); try { console.warn('[hajimete] missing element', s); } catch (x) {} }
+    r = document.createElement('div');
+  }
+  return r;
+}
+function $$(s, el) { try { return Array.prototype.slice.call((el || document).querySelectorAll(s)); } catch (e) { return []; } }
+function on(sel, ev, fn) { var el = $opt(sel); if (el) el.addEventListener(ev, safe(fn, sel + ' ' + ev)); else if (missingEls.indexOf(sel) < 0) missingEls.push(sel); }
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
-function pad(n) { return String(n).padStart(2, '0'); }
+function pad(n) { n = String(n); return n.length < 2 ? '0' + n : n; }
 function todayStr() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
 function fmtDate(s) { if (!s) return ''; var p = s.split('-'); return p[0] + '年' + (+p[1]) + '月' + (+p[2]) + '日'; }
 function errText(e) { if (!e) return '不明なエラー'; return (e.name ? e.name + ': ' : '') + (e.message || String(e)); }
+function errLine(e) {
+  try {
+    var lines = String((e && e.stack) || '').split('\n');
+    for (var i = 0; i < lines.length; i++) { var m = lines[i].match(/:(\d+):(\d+)\)?\s*$/); if (m) return '（' + m[1] + '行目）'; }
+  } catch (x) {}
+  return '';
+}
+
+var errorLog = [];
+function logError(where, e) {
+  var msg = where + ' → ' + errText(e) + errLine(e);
+  errorLog.push(msg);
+  if (errorLog.length > 20) errorLog.shift();
+  try { console.error('[hajimete]', where, e); } catch (x) {}
+  try { window.__pushErr(msg); } catch (x) {}
+  return msg;
+}
+function safe(fn, where) {
+  return function () {
+    try {
+      var r = fn.apply(this, arguments);
+      if (r && typeof r.then === 'function') r.then(null, function (e) { toast('エラー：' + logError(where, e)); });
+      return r;
+    } catch (e) { toast('エラー：' + logError(where, e)); }
+  };
+}
+window.addEventListener('unhandledrejection', function (ev) { logError('promise', ev.reason); });
 
 var ICON = {
   audio:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>',
@@ -389,47 +439,33 @@ var TOWARD = ['ママ','パパ','きょうだい','じいじ・ばあば','ひ�
 var CATS = ['人','食べもの','動物','乗りもの','あいさつ','気持ち','動作','その他'];
 var LIMIT = { audio:60, video:30 };
 
-/* ================= エラー記録 ================= */
-var errorLog = [];
-function logError(where, e) {
-  var msg = where + ' → ' + errText(e);
-  errorLog.push(new Date().toLocaleTimeString() + ' ' + msg);
-  if (errorLog.length > 20) errorLog.shift();
-  try { console.error('[hajimete]', where, e); } catch (x) {}
-  return msg;
-}
-window.addEventListener('error', function (ev) { logError('script', ev.error || ev.message); });
-window.addEventListener('unhandledrejection', function (ev) { logError('promise', ev.reason); toast('エラーが発生しました：' + errText(ev.reason)); });
+var toastT;
+function toast(msg) { var t = $opt('#toast'); if (!t) return; t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 3000); }
 
-/* ================= ストレージ層 =================
-   IndexedDB が使えれば IndexedDB、だめならメモリ（一時保存）に自動で切り替える */
 var store = { mode: 'none', db: null, mem: { children: {}, words: {} }, error: null, stage: '' };
-
 function withTimeout(p, ms, label) {
   return new Promise(function (res, rej) {
     var t = setTimeout(function () { var e = new Error(label + ' が ' + (ms / 1000) + '秒以内に応答しませんでした'); e.name = 'TimeoutError'; rej(e); }, ms);
-    p.then(function (v) { clearTimeout(t); res(v); }, function (e) { clearTimeout(t); rej(e); });
+    Promise.resolve(p).then(function (v) { clearTimeout(t); res(v); }, function (e) { clearTimeout(t); rej(e); });
   });
 }
+function getIDB() { try { return window.indexedDB || null; } catch (e) { return null; } }
 function openIDB() {
   return new Promise(function (res, rej) {
-    var idb;
-    try { idb = window.indexedDB; } catch (e) { rej(e); return; }
-    if (!idb) { var e0 = new Error('indexedDB がこのブラウザに存在しません'); e0.name = 'NotSupported'; rej(e0); return; }
+    var idb = getIDB();
+    if (!idb) { var e0 = new Error('indexedDB が使えません'); e0.name = 'NotSupported'; rej(e0); return; }
     var r;
     try { r = idb.open('hajimete-kotoba', 2); } catch (e) { rej(e); return; }
     r.onupgradeneeded = function () {
-      var d = r.result;
-      if (!d.objectStoreNames.contains('children')) d.createObjectStore('children', { keyPath: 'id' });
-      if (!d.objectStoreNames.contains('words')) d.createObjectStore('words', { keyPath: 'id' });
+      try {
+        var d = r.result;
+        if (!d.objectStoreNames.contains('children')) d.createObjectStore('children', { keyPath: 'id' });
+        if (!d.objectStoreNames.contains('words')) d.createObjectStore('words', { keyPath: 'id' });
+      } catch (e) { rej(e); }
     };
-    r.onsuccess = function () {
-      var d = r.result;
-      d.onversionchange = function () { d.close(); };
-      res(d);
-    };
+    r.onsuccess = function () { var d = r.result; d.onversionchange = function () { d.close(); }; res(d); };
     r.onerror = function () { rej(r.error || new Error('IndexedDB open error')); };
-    r.onblocked = function () { var e = new Error('別のタブでこのアプリが開いているため更新できません'); e.name = 'BlockedError'; rej(e); };
+    r.onblocked = function () { var e = new Error('別のタブでこのアプリが開いています。他のタブを閉じてください'); e.name = 'BlockedError'; rej(e); };
   });
 }
 function idbReq(storeName, mode, fn) {
@@ -446,14 +482,13 @@ function idbReq(storeName, mode, fn) {
 }
 function idbGetAll(st) {
   if (st.getAll) return st.getAll();
-  // 古いブラウザ用：カーソルで全件取得
   var list = [], cur = st.openCursor(), fake = { result: list, onsuccess: null };
-  cur.onsuccess = function () { var c = cur.result; if (c) { list.push(c.value); c.continue(); } else if (fake.onsuccess) fake.onsuccess(); };
+  cur.onsuccess = function () { var c = cur.result; if (c) { list.push(c.value); c['continue'](); } else if (fake.onsuccess) fake.onsuccess(); };
   return fake;
 }
 var DB = {
   all: function (s) {
-    if (store.mode === 'idb') return idbReq(s, 'readonly', idbGetAll);
+    if (store.mode === 'idb') return idbReq(s, 'readonly', idbGetAll).then(function (v) { return v || []; });
     return Promise.resolve(Object.keys(store.mem[s]).map(function (k) { return store.mem[s][k]; }));
   },
   put: function (s, v) {
@@ -461,7 +496,7 @@ var DB = {
     store.mem[s][v.id] = v; return Promise.resolve();
   },
   del: function (s, id) {
-    if (store.mode === 'idb') return idbReq(s, 'readwrite', function (st) { return st.delete(id); });
+    if (store.mode === 'idb') return idbReq(s, 'readwrite', function (st) { return st['delete'](id); });
     delete store.mem[s][id]; return Promise.resolve();
   },
   clear: function (s) {
@@ -469,20 +504,17 @@ var DB = {
     store.mem[s] = {}; return Promise.resolve();
   }
 };
-// Blob 保存テスト（iOS の一部で Blob 保存だけ失敗するケースを検出）
 var blobOK = true;
 function testIDBWrite() {
   var probe = { id: '__probe__', childId: '__probe__', blob: new Blob(['ok'], { type: 'text/plain' }) };
   return idbReq('words', 'readwrite', function (st) { return st.put(probe); })
-    .then(function () { return idbReq('words', 'readwrite', function (st) { return st.delete('__probe__'); }); })
-    .catch(function (e) {
-      blobOK = false; logError('Blob保存テスト', e);
-      var p2 = { id: '__probe__', childId: '__probe__' };
-      return idbReq('words', 'readwrite', function (st) { return st.put(p2); })
-        .then(function () { return idbReq('words', 'readwrite', function (st) { return st.delete('__probe__'); }); });
+    .then(function () { return idbReq('words', 'readwrite', function (st) { return st['delete']('__probe__'); }); })
+    .then(null, function (e) {
+      blobOK = false; logError('Blob保存テスト（互換モードに切替）', e);
+      return idbReq('words', 'readwrite', function (st) { return st.put({ id: '__probe__', childId: '__probe__' }); })
+        .then(function () { return idbReq('words', 'readwrite', function (st) { return st['delete']('__probe__'); }); });
     });
 }
-// Blob が直接保存できない環境用：ArrayBuffer に変換して保存
 function blobToStorable(b) {
   if (!b || blobOK) return Promise.resolve(b);
   return new Promise(function (res, rej) {
@@ -494,24 +526,20 @@ function blobToStorable(b) {
 }
 function toBlob(x) { if (!x) return null; if (x instanceof Blob) return x; if (x.__buf) return new Blob([x.__buf], { type: x.type || '' }); return null; }
 
-async function initStorage() {
+function initStorage() {
   store.stage = 'IndexedDB を開く';
-  try {
-    store.db = await withTimeout(openIDB(), 6000, 'IndexedDB');
-    store.stage = '書き込みテスト';
-    await withTimeout(testIDBWrite(), 6000, '書き込みテスト');
-    store.mode = 'idb';
-    store.error = null;
-  } catch (e) {
-    store.error = logError('保存領域(' + store.stage + ')', e);
-    store.mode = 'memory';
-    try { if (store.db) store.db.close(); } catch (x) {}
-    store.db = null;
-  }
-  $('#memWarn').classList.toggle('show', store.mode === 'memory');
+  return withTimeout(openIDB(), 6000, 'IndexedDB')
+    .then(function (d) { store.db = d; store.stage = '書き込みテスト'; return withTimeout(testIDBWrite(), 6000, '書き込みテスト'); })
+    .then(function () { store.mode = 'idb'; store.error = null; })
+    .then(null, function (e) {
+      store.error = logError('保存領域(' + store.stage + ')', e);
+      store.mode = 'memory';
+      try { if (store.db) store.db.close(); } catch (x) {}
+      store.db = null;
+    })
+    .then(function () { var w = $opt('#memWarn'); if (w) w.classList.toggle('show', store.mode === 'memory'); });
 }
 
-/* ================= 状態 ================= */
 var child = null, words = [];
 var current = 'loading', navStack = [];
 var tlFilter = 'all', tlAsc = true, tlQuery = '';
@@ -522,7 +550,7 @@ function ageMonths(birth, date) {
   var b = new Date(birth + 'T00:00:00'), d = new Date(date + 'T00:00:00');
   var m = (d.getFullYear() - b.getFullYear()) * 12 + (d.getMonth() - b.getMonth());
   if (d.getDate() < b.getDate()) m--;
-  return m;
+  return isNaN(m) ? null : m;
 }
 function ageLabel(m) {
   if (m == null || isNaN(m)) return '';
@@ -530,73 +558,66 @@ function ageLabel(m) {
   var y = Math.floor(m / 12), mm = m % 12;
   return y ? y + '歳' + mm + 'か月' : mm + 'か月';
 }
-var toastT;
-function toast(msg) { var t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 2600); }
 
-/* ================= 画面遷移 ================= */
 var TITLES = { loading:'はじめてのことば', onboard:'はじめてのことば', home:'はじめてのことば', record:'記録する', form:'ことばを登録', timeline:'ことば年表', settings:'こどもの設定', diag:'動作環境チェック' };
 var TAB_SCREENS = ['home','timeline','settings','diag'];
 function show(name, push) {
   if (push === undefined) push = true;
-  if (name === 'diag' && !child) { push = true; }
-  if (current === 'record' && name !== 'record') cleanupRecorder();
-  if (push && current !== name && (!TAB_SCREENS.includes(name) || !child) && current !== 'loading') navStack.push(current);
-  if (TAB_SCREENS.includes(name) && child) navStack = [];
+  if (current === 'record' && name !== 'record') { try { cleanupRecorder(); } catch (e) { logError('録音停止', e); } }
+  if (push && current !== name && current !== 'loading' && (TAB_SCREENS.indexOf(name) < 0 || !child)) navStack.push(current);
+  if (TAB_SCREENS.indexOf(name) >= 0 && child) navStack = [];
   current = name;
   $$('.screen').forEach(function (s) { s.classList.toggle('active', s.id === 'scr-' + name); });
   $('#title').textContent = TITLES[name] || '';
-  var isTab = TAB_SCREENS.includes(name) && !!child;
+  var isTab = TAB_SCREENS.indexOf(name) >= 0 && !!child;
   $('#btnBack').classList.toggle('show', !isTab && name !== 'onboard' && name !== 'loading');
   $('#tabbar').classList.toggle('hide', !isTab);
-  $$('.tab').forEach(function (t) { t.classList.toggle('on', t.dataset.go === name); });
-  stopInlineAudio();
+  $$('.tab').forEach(function (t) { t.classList.toggle('on', t.getAttribute('data-go') === name); });
+  try { stopInlineAudio(); } catch (e) {}
   try {
     if (name === 'home') renderHome();
     if (name === 'timeline') renderTimeline();
-    if (name === 'settings') renderSettings();
+    if (name === 'settings') renderSettings().then(null, function (e) { logError('設定画面', e); });
     if (name === 'diag') runDiagnostics();
   } catch (e) { toast('表示エラー：' + logError('画面 ' + name, e)); }
-  window.scrollTo(0, 0);
+  try { window.scrollTo(0, 0); } catch (e) {}
 }
 function goBack() {
   var prev = navStack.pop() || (child ? 'home' : 'onboard');
   if (current === 'form' && prev === 'record') { show('home', false); return; }
   show(prev, false);
 }
-
-async function loadAll() {
-  var kids = await DB.all('children');
-  kids.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
-  child = kids[0] || null;
-  words = child ? (await DB.all('words')).filter(function (w) { return w.childId === child.id; }) : [];
+function loadAll() {
+  return DB.all('children').then(function (kids) {
+    kids.sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0); });
+    child = kids[0] || null;
+    if (!child) { words = []; return; }
+    return DB.all('words').then(function (ws) { words = ws.filter(function (w) { return w.childId === child.id; }); });
+  });
 }
-function sortByDate(a, b) { return (a.spokenAt || '').localeCompare(b.spokenAt || '') || (a.createdAt - b.createdAt); }
+function sortByDate(a, b) { return String(a.spokenAt || '').localeCompare(String(b.spokenAt || '')) || ((a.createdAt || 0) - (b.createdAt || 0)); }
 
-/* ================= 初回登録 ================= */
 $('#obBirth').max = todayStr();
-$('#obStart').addEventListener('click', async function () {
+on('#obStart', 'click', function () {
   var name = $('#obName').value.trim(), birth = $('#obBirth').value;
   if (!name) return toast('名前を入力してください');
   if (!birth) return toast('生年月日を入力してください');
-  var btn = this; btn.disabled = true;
-  try {
-    child = { id: uid(), name: name, birthday: birth, createdAt: Date.now() };
-    await DB.put('children', child);
-    words = [];
-    navStack = [];
+  var btn = $('#obStart'); btn.disabled = true;
+  var c = { id: uid(), name: name, birthday: birth, createdAt: Date.now() };
+  return DB.put('children', c).then(function () {
+    child = c; words = []; navStack = [];
     show('home');
     toast(name + 'ちゃんの記録をはじめます');
-  } catch (e) {
-    child = null;
+  }, function (e) {
     toast('保存できませんでした：' + logError('初回登録', e));
-  } finally { btn.disabled = false; }
+  }).then(function () { btn.disabled = false; });
 });
 
-/* ================= ホーム ================= */
 function itemHTML(w) {
-  var playBtn = w.type === 'audio' ? '<span class="play" data-play="' + w.id + '" role="button" aria-label="再生">' + ICON.play + '</span>' : '';
-  return '<button class="item" data-open="' + w.id + '">' +
-    '<span class="type ' + w.type + '">' + ICON[w.type] + '</span>' +
+  var type = ICON[w.type] ? w.type : 'text';
+  var playBtn = type === 'audio' ? '<span class="play" data-play="' + esc(w.id) + '" role="button" aria-label="再生">' + ICON.play + '</span>' : '';
+  return '<button class="item" data-open="' + esc(w.id) + '">' +
+    '<span class="type ' + type + '">' + ICON[type] + '</span>' +
     '<span class="body"><span class="word">「' + esc(w.word) + '」' + (w.first ? '<span class="badge">はじめて</span>' : '') + '</span>' +
     '<span class="meta">' + ageLabel(w.ageMonths) + '・' + fmtDate(w.spokenAt) + (w.toward ? '・' + esc(w.toward) + 'に' : '') + '</span></span>' +
     (w.favorite ? '<span class="fav">★</span>' : '') + playBtn + '</button>';
@@ -608,27 +629,30 @@ function renderHome() {
   $('#sAll').textContent = words.length;
   $('#sAudio').textContent = words.filter(function (w) { return w.type === 'audio'; }).length;
   $('#sVideo').textContent = words.filter(function (w) { return w.type === 'video'; }).length;
-  var sorted = words.slice().sort(sortByDate);
-  var first = sorted.find(function (w) { return w.first; }) || sorted[0];
-  $('#firstWordBox').innerHTML = first ? '<button class="card first-word" data-open="' + first.id + '" style="width:100%;text-align:left">' +
+  var sorted = words.slice().sort(sortByDate), first = null;
+  for (var i = 0; i < sorted.length; i++) if (sorted[i].first) { first = sorted[i]; break; }
+  if (!first) first = sorted[0];
+  $('#firstWordBox').innerHTML = first ? '<button class="card first-word" data-open="' + esc(first.id) + '" style="width:100%;text-align:left">' +
     '<span class="medal">🏅</span><span><span class="muted">' + esc(child.name) + 'ちゃんの はじめてのことば</span><br>' +
     '<span class="w">「' + esc(first.word) + '」</span> <span class="muted">' + ageLabel(first.ageMonths) + '</span></span></button>' : '';
-  var recent = words.slice().sort(function (a, b) { return b.createdAt - a.createdAt; }).slice(0, 3);
+  var recent = words.slice().sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); }).slice(0, 3);
   $('#recentList').innerHTML = recent.length ? recent.map(itemHTML).join('')
     : '<div class="empty"><span class="big">🌱</span>まだ記録がありません。<br>最初のことばを残してみましょう。</div>';
 }
 
-/* ================= 録音・撮影 ================= */
 var rec = { kind:null, stream:null, mr:null, chunks:[], blob:null, timer:null, start:0, facing:'environment', actx:null, raf:null, url:null };
 function pickMime(kind) {
-  if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
-  var list = kind === 'video'
-    ? ['video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']
-    : ['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'];
-  return list.find(function (m) { try { return MediaRecorder.isTypeSupported(m); } catch (e) { return false; } }) || '';
+  try {
+    if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+    var list = kind === 'video'
+      ? ['video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']
+      : ['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'];
+    for (var i = 0; i < list.length; i++) { try { if (MediaRecorder.isTypeSupported(list[i])) return list[i]; } catch (e) {} }
+  } catch (e) {}
+  return '';
 }
 function stopStream() {
-  if (rec.stream) rec.stream.getTracks().forEach(function (t) { t.stop(); });
+  if (rec.stream) rec.stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
   rec.stream = null;
   if (rec.raf) cancelAnimationFrame(rec.raf); rec.raf = null;
   if (rec.actx) { try { rec.actx.close(); } catch (e) {} rec.actx = null; }
@@ -643,7 +667,7 @@ function cleanupRecorder() {
 function setRecMsg(msg) { $('#recMsg').innerHTML = msg ? '<div class="rec-msg">' + msg + '</div>' : ''; }
 function fmtSec(s) { return Math.floor(s / 60) + ':' + pad(s % 60); }
 
-async function openRecorder(kind) {
+function openRecorder(kind) {
   closeOverlay();
   show('record');
   cleanupRecorder();
@@ -664,41 +688,42 @@ async function openRecorder(kind) {
   if (kind === 'video') fb.setAttribute('capture', 'environment'); else fb.removeAttribute('capture');
   $('#fbText').textContent = kind === 'video' ? '端末のカメラで撮る／動画を選ぶ' : '端末の録音アプリ／音声ファイルを選ぶ';
   stage.innerHTML = kind === 'video'
-    ? '<video id="live" playsinline muted autoplay></video><button class="flip" id="btnFlip" aria-label="カメラ切替">' + ICON.flip + '</button>'
+    ? '<video id="live" playsinline muted autoplay></video><button class="flip" id="btnFlip" type="button" aria-label="カメラ切替">' + ICON.flip + '</button>'
     : '<div class="meter" id="meter">' + ICON.mic + '</div>';
   if (!window.isSecureContext) { setRecMsg('このページは HTTPS で開かれていないため、アプリ内の録音・撮影は使えません。下のボタンから端末の機能で記録できます。'); return; }
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
-    setRecMsg('このブラウザはアプリ内の録音・撮影に対応していません（アプリ内ブラウザの可能性があります）。Safari／Chromeで開くか、下のボタンから端末の機能で記録してください。');
+    setRecMsg('このブラウザはアプリ内の録音・撮影に対応していません。Safari／Chromeで開くか、下のボタンから端末の機能で記録してください。');
     return;
   }
-  await startStream();
-  var fl = $('#btnFlip');
-  if (fl) fl.addEventListener('click', async function () {
+  var fl = $opt('#btnFlip');
+  if (fl) fl.addEventListener('click', safe(function () {
     if (rec.mr && rec.mr.state === 'recording') return;
     rec.facing = rec.facing === 'environment' ? 'user' : 'environment';
-    stopStream(); await startStream();
-  });
+    stopStream(); return startStream();
+  }, 'カメラ切替'));
+  return startStream();
 }
-async function startStream() {
+function startStream() {
   var kind = rec.kind;
-  try {
-    rec.stream = await navigator.mediaDevices.getUserMedia(kind === 'video'
-      ? { video: { facingMode: rec.facing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true }
-      : { audio: { echoCancellation: true, noiseSuppression: false } });
+  var cons = kind === 'video'
+    ? { video: { facingMode: rec.facing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true }
+    : { audio: { echoCancellation: true, noiseSuppression: false } };
+  return navigator.mediaDevices.getUserMedia(cons).then(function (stream) {
+    rec.stream = stream;
     if (current !== 'record' || rec.kind !== kind) { stopStream(); return; }
     if (kind === 'video') {
-      var v = $('#live'); v.srcObject = rec.stream; v.play().catch(function () {});
-      v.style.transform = rec.facing === 'user' ? 'scaleX(-1)' : '';
+      var v = $opt('#live');
+      if (v) { v.srcObject = stream; var p = v.play(); if (p && p['catch']) p['catch'](function () {}); v.style.transform = rec.facing === 'user' ? 'scaleX(-1)' : ''; }
     } else startMeter();
     $('#btnShutter').disabled = false;
-  } catch (e) {
+  }, function (e) {
     var why = logError('getUserMedia', e);
-    var hint = (e && e.name === 'NotAllowedError') ? 'マイク／カメラが「許可しない」になっています。ブラウザの設定（iPhoneは「設定」→「Safari」→「マイク／カメラ」）で許可してください。'
+    var hint = (e && e.name === 'NotAllowedError') ? 'マイク／カメラが「許可しない」になっています。ブラウザの設定で許可してください。'
       : (e && e.name === 'NotFoundError') ? 'マイク／カメラが見つかりませんでした。'
       : (e && e.name === 'NotReadableError') ? '他のアプリがマイク／カメラを使用中です。'
       : 'マイク／カメラを起動できませんでした。';
     setRecMsg(hint + '<br><small>' + esc(why) + '</small><br>下のボタンから端末の機能でも記録できます。');
-  }
+  });
 }
 function startMeter() {
   try {
@@ -707,7 +732,7 @@ function startMeter() {
     rec.actx = new AC();
     var src = rec.actx.createMediaStreamSource(rec.stream), an = rec.actx.createAnalyser();
     an.fftSize = 512; src.connect(an);
-    var data = new Uint8Array(an.fftSize), meter = $('#meter');
+    var data = new Uint8Array(an.fftSize), meter = $opt('#meter');
     var loop = function () {
       an.getByteTimeDomainData(data);
       var sum = 0; for (var i = 0; i < data.length; i++) { var x = (data[i] - 128) / 128; sum += x * x; }
@@ -725,11 +750,11 @@ function startRec() {
   try { rec.mr = mime ? new MediaRecorder(rec.stream, { mimeType: mime }) : new MediaRecorder(rec.stream); }
   catch (e) { try { rec.mr = new MediaRecorder(rec.stream); } catch (e2) { toast('録音を開始できません：' + logError('MediaRecorder', e2)); return; } }
   rec.mr.ondataavailable = function (e) { if (e.data && e.data.size) rec.chunks.push(e.data); };
-  rec.mr.onstop = onRecStop;
+  rec.mr.onstop = safe(onRecStop, '録音停止処理');
   rec.mr.start(250);
   rec.start = Date.now();
   var sh = $('#btnShutter'); sh.classList.add('recording'); sh.setAttribute('aria-label', '停止');
-  if ($('#btnFlip')) $('#btnFlip').style.display = 'none';
+  var fl = $opt('#btnFlip'); if (fl) fl.style.display = 'none';
   $('#recFallback').style.display = 'none';
   var timerEl = document.createElement('div');
   timerEl.className = 'rec-timer'; timerEl.innerHTML = '<span class="rec-dot"></span><span id="tSec">0:00</span> / ' + fmtSec(LIMIT[rec.kind]);
@@ -738,13 +763,13 @@ function startRec() {
   if (navigator.vibrate) navigator.vibrate(30);
   rec.timer = setInterval(function () {
     var s = Math.floor((Date.now() - rec.start) / 1000);
-    var el = $('#tSec'); if (el) el.textContent = fmtSec(s);
+    var el = $opt('#tSec'); if (el) el.textContent = fmtSec(s);
     if (s >= LIMIT[rec.kind]) stopRec();
   }, 200);
 }
 function stopRec() {
   clearInterval(rec.timer);
-  if (rec.mr && rec.mr.state !== 'inactive') rec.mr.stop();
+  if (rec.mr && rec.mr.state !== 'inactive') { try { rec.mr.stop(); } catch (e) { logError('録音停止', e); } }
   if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
 }
 function onRecStop() {
@@ -766,14 +791,15 @@ function showRecPreview(blob) {
   $('#recFallback').style.display = 'none';
   setRecMsg('');
 }
-$('#btnShutter').addEventListener('click', function () { if (rec.mr && rec.mr.state === 'recording') stopRec(); else startRec(); });
-$('#btnRetake').addEventListener('click', function () { openRecorder(rec.kind); });
-$('#btnUse').addEventListener('click', function () { if (!rec.blob) return; pending = { kind: rec.kind, blob: rec.blob }; openForm(); });
-$('#fbInput').addEventListener('change', function (e) {
+on('#btnShutter', 'click', function () { if (rec.mr && rec.mr.state === 'recording') stopRec(); else startRec(); });
+on('#btnRetake', 'click', function () { return openRecorder(rec.kind); });
+on('#btnUse', 'click', function () { if (!rec.blob) return; pending = { kind: rec.kind, blob: rec.blob }; openForm(); });
+on('#fbInput', 'change', function (e) {
   var f = e.target.files && e.target.files[0];
   if (!f) return;
-  var isVideo = (f.type || '').indexOf('video') === 0, isAudio = (f.type || '').indexOf('audio') === 0;
-  if (!isVideo && !isAudio) { isVideo = rec.kind === 'video'; isAudio = !isVideo; } // 種類不明なファイルは選択中の種類として扱う
+  var t = f.type || '';
+  var isVideo = t.indexOf('video') === 0, isAudio = t.indexOf('audio') === 0;
+  if (!isVideo && !isAudio) { isVideo = rec.kind === 'video'; }
   if (f.size > 200 * 1024 * 1024) return toast('ファイルが大きすぎます（200MBまで）');
   stopStream();
   rec.kind = isVideo ? 'video' : 'audio';
@@ -781,12 +807,11 @@ $('#fbInput').addEventListener('change', function (e) {
   showRecPreview(f);
 });
 
-/* ================= 登録 ================= */
 function buildChips(el, list) { el.innerHTML = list.map(function (v) { return '<button type="button" class="chip" data-v="' + esc(v) + '">' + esc(v) + '</button>'; }).join(''); }
-function chipValue(el) { var c = $('.chip.on', el); return c ? c.dataset.v : ''; }
+function chipValue(el) { var c = $opt('.chip.on', el); return c ? c.getAttribute('data-v') : ''; }
 ['#fToward', '#fCat'].forEach(function (sel) {
-  $(sel).addEventListener('click', function (e) {
-    var c = e.target.closest('.chip'); if (!c) return;
+  on(sel, 'click', function (e) {
+    var c = e.target.closest ? e.target.closest('.chip') : null; if (!c) return;
     var was = c.classList.contains('on');
     $$('.chip', $(sel)).forEach(function (x) { x.classList.remove('on'); });
     if (!was) c.classList.add('on');
@@ -799,7 +824,7 @@ function openForm() {
   show('form');
   if (formUrl) { URL.revokeObjectURL(formUrl); formUrl = null; }
   var box = $('#formMedia');
-  if (pending.blob) {
+  if (pending && pending.blob) {
     formUrl = URL.createObjectURL(pending.blob);
     box.innerHTML = pending.kind === 'video'
       ? '<div class="media-mini"><video src="' + formUrl + '" controls playsinline></video></div>'
@@ -811,61 +836,62 @@ function openForm() {
   $$('.chip', $('#fToward')).forEach(function (x) { x.classList.remove('on'); });
   $$('.chip', $('#fCat')).forEach(function (x) { x.classList.remove('on'); });
   updateFormAge();
-  setTimeout(function () { $('#fWord').focus(); }, 250);
+  setTimeout(function () { try { $('#fWord').focus(); } catch (e) {} }, 250);
 }
 function updateFormAge() {
+  if (!child) return;
   var m = ageMonths(child.birthday, $('#fDate').value);
   $('#fAge').textContent = m == null ? '' : 'この日の' + child.name + 'ちゃん：' + ageLabel(m);
 }
-$('#fDate').addEventListener('change', updateFormAge);
-$('#btnSave').addEventListener('click', async function () {
+on('#fDate', 'change', updateFormAge);
+on('#btnSave', 'click', function () {
+  if (!child) return toast('お子さまの登録が必要です');
   var word = $('#fWord').value.trim();
   if (!word) { toast('「なんて言った？」を入力してください'); $('#fWord').focus(); return; }
   var spokenAt = $('#fDate').value || todayStr();
   var btn = $('#btnSave'); btn.disabled = true;
-  try {
-    var b = pending.blob || null;
+  var b = (pending && pending.blob) || null;
+  var kind = pending ? pending.kind : 'text';
+  return blobToStorable(b).then(function (stored) {
     var entry = {
       id: uid(), childId: child.id, word: word, spokenAt: spokenAt,
       ageMonths: ageMonths(child.birthday, spokenAt),
       toward: chipValue($('#fToward')), category: chipValue($('#fCat')),
       memo: $('#fMemo').value.trim(),
       first: $('#fFirst').checked, favorite: $('#fFav').checked,
-      type: b ? pending.kind : 'text',
-      mime: b ? b.type : '', size: b ? b.size : 0,
-      blob: await blobToStorable(b),
-      createdAt: Date.now(), updatedAt: Date.now()
+      type: b ? kind : 'text', mime: b ? b.type : '', size: b ? b.size : 0,
+      blob: stored, createdAt: Date.now(), updatedAt: Date.now()
     };
-    await DB.put('words', entry);
-    words.push(entry);
-    pending = null;
-    if (formUrl) { URL.revokeObjectURL(formUrl); formUrl = null; }
-    $('#formMedia').innerHTML = '';
-    if (navigator.vibrate) navigator.vibrate(40);
-    navStack = [];
-    show('timeline');
-    toast('「' + word + '」を残しました 🎉');
-  } catch (e) {
+    return DB.put('words', entry).then(function () {
+      words.push(entry);
+      pending = null;
+      if (formUrl) { URL.revokeObjectURL(formUrl); formUrl = null; }
+      $('#formMedia').innerHTML = '';
+      if (navigator.vibrate) navigator.vibrate(40);
+      navStack = [];
+      show('timeline');
+      toast('「' + word + '」を残しました 🎉');
+    });
+  }).then(null, function (e) {
     toast('保存に失敗しました：' + logError('ことば保存', e));
-  } finally { btn.disabled = false; }
+  }).then(function () { btn.disabled = false; });
 });
 
-/* ================= 年表 ================= */
-$('#tlFilters').addEventListener('click', function (e) {
-  var c = e.target.closest('.chip'); if (!c) return;
-  tlFilter = c.dataset.f;
+on('#tlFilters', 'click', function (e) {
+  var c = e.target.closest ? e.target.closest('.chip') : null; if (!c) return;
+  tlFilter = c.getAttribute('data-f');
   $$('.chip', $('#tlFilters')).forEach(function (x) { x.classList.toggle('on', x === c); });
   renderTimeline();
 });
-$('#tlSort').addEventListener('click', function () { tlAsc = !tlAsc; renderTimeline(); });
-$('#tlSearch').addEventListener('input', function (e) { tlQuery = e.target.value.trim(); renderTimeline(); });
+on('#tlSort', 'click', function () { tlAsc = !tlAsc; renderTimeline(); });
+on('#tlSearch', 'input', function (e) { tlQuery = e.target.value.trim(); renderTimeline(); });
 function renderTimeline() {
   $('#tlSort').textContent = tlAsc ? '古い順 ↓' : '新しい順 ↑';
   var list = words.filter(function (w) {
     if (tlFilter === 'fav' && !w.favorite) return false;
     if (tlFilter === 'first' && !w.first) return false;
-    if (['audio','video','text'].includes(tlFilter) && w.type !== tlFilter) return false;
-    if (tlQuery && (w.word + ' ' + (w.memo || '') + ' ' + (w.category || '')).indexOf(tlQuery) < 0) return false;
+    if ((tlFilter === 'audio' || tlFilter === 'video' || tlFilter === 'text') && w.type !== tlFilter) return false;
+    if (tlQuery && ((w.word || '') + ' ' + (w.memo || '') + ' ' + (w.category || '')).indexOf(tlQuery) < 0) return false;
     return true;
   }).sort(sortByDate);
   if (!tlAsc) list.reverse();
@@ -878,69 +904,70 @@ function renderTimeline() {
   }
   var groups = [];
   list.forEach(function (w) {
-    var key = ageLabel(w.ageMonths), g = groups[groups.length - 1];
+    var key = ageLabel(w.ageMonths) || '月齢不明', g = groups[groups.length - 1];
     if (g && g.key === key) g.items.push(w); else groups.push({ key: key, items: [w] });
   });
-  $('#tlList').innerHTML = groups.map(function (g) { return '<div class="tl-group"><div class="tl-age">' + g.key + '</div>' + g.items.map(itemHTML).join('') + '</div>'; }).join('');
+  $('#tlList').innerHTML = groups.map(function (g) { return '<div class="tl-group"><div class="tl-age">' + esc(g.key) + '</div>' + g.items.map(itemHTML).join('') + '</div>'; }).join('');
 }
 
-/* ================= 一覧からの再生 ================= */
 var inline = { audio:null, url:null, id:null };
 function stopInlineAudio() {
-  if (inline.audio) { inline.audio.pause(); inline.audio = null; }
+  if (inline.audio) { try { inline.audio.pause(); } catch (e) {} inline.audio = null; }
   if (inline.url) { URL.revokeObjectURL(inline.url); inline.url = null; }
   $$('.play.playing').forEach(function (p) { p.classList.remove('playing'); p.innerHTML = ICON.play; });
   inline.id = null;
 }
+function findWord(id) { for (var i = 0; i < words.length; i++) if (words[i].id === id) return words[i]; return null; }
 function toggleInline(id, btn) {
   var same = inline.id === id;
   stopInlineAudio();
   if (same) return;
-  var w = words.find(function (x) { return x.id === id; }); var b = w && toBlob(w.blob);
+  var w = findWord(id), b = w && toBlob(w.blob);
   if (!b) return;
   inline.url = URL.createObjectURL(b);
   inline.audio = new Audio(inline.url); inline.id = id;
   btn.classList.add('playing'); btn.innerHTML = ICON.stop;
   inline.audio.onended = stopInlineAudio;
-  inline.audio.play().catch(function (e) { stopInlineAudio(); toast('再生できませんでした：' + errText(e)); });
+  var p = inline.audio.play();
+  if (p && p['catch']) p['catch'](function (e) { stopInlineAudio(); toast('再生できませんでした：' + errText(e)); });
 }
 
-/* ================= 詳細 ================= */
 var detailUrl = null;
 function openDetail(id) {
   stopInlineAudio();
-  var w = words.find(function (x) { return x.id === id; }); if (!w) return;
+  var w = findWord(id); if (!w) return;
   if (detailUrl) URL.revokeObjectURL(detailUrl);
   var b = toBlob(w.blob);
   detailUrl = b ? URL.createObjectURL(b) : null;
   var media = (w.type === 'video' && detailUrl) ? '<div class="media-mini"><video src="' + detailUrl + '" controls playsinline></video></div>'
     : (w.type === 'audio' && detailUrl) ? '<div class="media-mini audio"><audio src="' + detailUrl + '" controls></audio></div>' : '';
-  var rows = [['種類', TYPE_LABEL[w.type]], w.toward && ['誰に', w.toward], w.category && ['分類', w.category], w.memo && ['メモ', w.memo], w.size && ['サイズ', (w.size / 1024 / 1024).toFixed(1) + ' MB']].filter(Boolean);
+  var rows = [['種類', TYPE_LABEL[w.type] || '—'], w.toward && ['誰に', w.toward], w.category && ['分類', w.category], w.memo && ['メモ', w.memo], w.size && ['サイズ', (w.size / 1024 / 1024).toFixed(1) + ' MB']].filter(Boolean);
   $('#detailSheet').innerHTML = '<div class="grab"></div>' + media +
     '<div class="d-word">「' + esc(w.word) + '」</div>' +
     '<div class="d-meta">' + ageLabel(w.ageMonths) + '・' + fmtDate(w.spokenAt) + (w.first ? '<span class="badge">はじめて</span>' : '') + '</div>' +
     '<dl class="d-info">' + rows.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '</dl>' +
-    '<div class="row" style="margin-top:22px"><button class="btn btn-ghost" id="dFav">' + (w.favorite ? '★ お気に入り解除' : '☆ お気に入り') + '</button>' +
-    '<button class="btn btn-danger" id="dDel" style="flex:.6">削除</button></div>' +
-    '<button class="btn btn-ghost" id="dClose" style="margin-top:10px">閉じる</button>';
+    '<div class="row" style="margin-top:22px"><button type="button" class="btn btn-ghost" id="dFav">' + (w.favorite ? '★ お気に入り解除' : '☆ お気に入り') + '</button>' +
+    '<button type="button" class="btn btn-danger" id="dDel" style="flex:.6">削除</button></div>' +
+    '<button type="button" class="btn btn-ghost" id="dClose" style="margin-top:10px">閉じる</button>';
   $('#ovDetail').classList.add('show');
   $('#dClose').onclick = closeOverlay;
-  $('#dFav').onclick = async function () {
+  $('#dFav').onclick = safe(function () {
     w.favorite = !w.favorite; w.updatedAt = Date.now();
-    try { await DB.put('words', w); } catch (e) { toast('保存に失敗：' + logError('お気に入り', e)); }
     $('#dFav').textContent = w.favorite ? '★ お気に入り解除' : '☆ お気に入り';
     refreshCurrent();
-  };
-  $('#dDel').onclick = async function () {
+    return DB.put('words', w);
+  }, 'お気に入り');
+  $('#dDel').onclick = safe(function () {
     if (!confirm('「' + w.word + '」の記録を削除しますか？\n元に戻せません。')) return;
-    try { await DB.del('words', w.id); } catch (e) { toast('削除に失敗：' + logError('削除', e)); return; }
-    words = words.filter(function (x) { return x.id !== w.id; });
-    closeOverlay(); refreshCurrent(); toast('削除しました');
-  };
+    return DB.del('words', w.id).then(function () {
+      words = words.filter(function (x) { return x.id !== w.id; });
+      closeOverlay(); refreshCurrent(); toast('削除しました');
+    });
+  }, '削除');
 }
 function closeOverlay() {
   $$('.overlay').forEach(function (o) { o.classList.remove('show'); });
-  $$('#detailSheet video, #detailSheet audio').forEach(function (m) { m.pause(); });
+  $$('#detailSheet video, #detailSheet audio').forEach(function (m) { try { m.pause(); } catch (e) {} });
   if (detailUrl) { URL.revokeObjectURL(detailUrl); detailUrl = null; }
   $('#detailSheet').innerHTML = '';
 }
@@ -948,165 +975,188 @@ function refreshCurrent() { if (current === 'home') renderHome(); if (current ==
 $$('.overlay').forEach(function (o) { o.addEventListener('click', function (e) { if (e.target === o) closeOverlay(); }); });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeOverlay(); });
 
-/* ================= 設定 ================= */
-async function renderSettings() {
-  if (!child) return;
+function renderSettings() {
+  if (!child) return Promise.resolve();
   $('#stName').value = child.name; $('#stBirth').value = child.birthday; $('#stBirth').max = todayStr();
   var used = words.reduce(function (s, w) { return s + (w.size || 0); }, 0);
   var txt = '記録メディア：' + (used / 1024 / 1024).toFixed(1) + ' MB（' + words.length + '件）', pct = 0;
   if (store.mode === 'memory') txt += '／⚠️ 一時保存モード';
-  try {
-    if (navigator.storage && navigator.storage.estimate) {
-      var est = await navigator.storage.estimate();
-      if (est.quota) { pct = Math.min(100, est.usage / est.quota * 100); txt += '／上限目安 ' + (est.quota / 1024 / 1024 / 1024).toFixed(1) + ' GB'; }
-    }
-    if (navigator.storage && navigator.storage.persisted && await navigator.storage.persisted()) {
-      $('#stPersist').textContent = '✓ 消えにくい設定になっています'; $('#stPersist').disabled = true;
-    }
-  } catch (e) {}
   $('#stStorage').textContent = txt;
-  $('#stBar').style.width = Math.max(pct, used ? 2 : 0) + '%';
+  $('#stBar').style.width = (used ? 2 : 0) + '%';
+  var S = navigator.storage;
+  if (!S || !S.estimate) return Promise.resolve();
+  return withTimeout(S.estimate(), 3000, '容量取得').then(function (est) {
+    if (est && est.quota) { pct = Math.min(100, est.usage / est.quota * 100); txt += '／上限目安 ' + (est.quota / 1024 / 1024 / 1024).toFixed(1) + ' GB'; }
+    $('#stStorage').textContent = txt;
+    $('#stBar').style.width = Math.max(pct, used ? 2 : 0) + '%';
+    return S.persisted ? withTimeout(S.persisted(), 3000, '永続化確認') : false;
+  }).then(function (p) {
+    if (p) { $('#stPersist').textContent = '✓ 消えにくい設定になっています'; $('#stPersist').disabled = true; }
+  }, function () {});
 }
-$('#stSave').addEventListener('click', async function () {
+on('#stSave', 'click', function () {
   var name = $('#stName').value.trim(), birth = $('#stBirth').value;
   if (!name || !birth) return toast('名前と生年月日を入力してください');
-  try {
-    child.name = name; child.birthday = birth;
-    await DB.put('children', child);
-    for (var i = 0; i < words.length; i++) { words[i].ageMonths = ageMonths(birth, words[i].spokenAt); await DB.put('words', words[i]); }
-    toast('保存しました');
-  } catch (e) { toast('保存に失敗：' + logError('設定保存', e)); }
+  child.name = name; child.birthday = birth;
+  var p = DB.put('children', child);
+  words.forEach(function (w) { w.ageMonths = ageMonths(birth, w.spokenAt); p = p.then(function () { return DB.put('words', w); }); });
+  return p.then(function () { toast('保存しました'); });
 });
-$('#stPersist').addEventListener('click', async function () {
+on('#stPersist', 'click', function () {
   if (!(navigator.storage && navigator.storage.persist)) return toast('このブラウザは未対応です');
-  var ok = await navigator.storage.persist();
-  toast(ok ? '消えにくい設定にしました' : '許可されませんでした（ホーム画面に追加すると通りやすくなります）');
-  renderSettings();
+  return withTimeout(navigator.storage.persist(), 5000, '永続化').then(function (ok) {
+    toast(ok ? '消えにくい設定にしました' : '許可されませんでした（ホーム画面に追加すると通りやすくなります）');
+    return renderSettings();
+  });
 });
-$('#stReset').addEventListener('click', async function () {
+on('#stReset', 'click', function () {
   if (!confirm('すべての記録とお子さまの情報を削除します。\n元に戻せません。よろしいですか？')) return;
-  try { await DB.clear('words'); await DB.clear('children'); } catch (e) { toast('削除に失敗：' + logError('全削除', e)); return; }
-  child = null; words = []; navStack = [];
-  $('#obName').value = ''; $('#obBirth').value = '';
-  show('onboard', false); toast('すべて削除しました');
+  return DB.clear('words').then(function () { return DB.clear('children'); }).then(function () {
+    child = null; words = []; navStack = [];
+    $('#obName').value = ''; $('#obBirth').value = '';
+    show('onboard', false); toast('すべて削除しました');
+  });
 });
 
-/* ================= 動作環境チェック ================= */
 function detectBrowser() {
   var ua = navigator.userAgent || '';
   var inApp = /Line\//i.test(ua) ? 'LINE' : /FBAN|FBAV/i.test(ua) ? 'Facebook' : /Instagram/i.test(ua) ? 'Instagram'
     : /Teams/i.test(ua) ? 'Teams' : /Outlook/i.test(ua) ? 'Outlook' : /MicroMessenger/i.test(ua) ? 'WeChat'
-    : /GSA\//i.test(ua) ? 'Googleアプリ' : /Twitter/i.test(ua) ? 'X(Twitter)' : '';
+    : /GSA\//i.test(ua) ? 'Googleアプリ' : /Twitter/i.test(ua) ? 'X(Twitter)' : /; wv\)/.test(ua) ? 'アプリ内WebView' : '';
   var ios = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  var name = /EdgiOS|EdgA|Edg\//.test(ua) ? 'Edge' : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /FxiOS|Firefox/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : '不明';
-  var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  var name = /EdgiOS|EdgA|Edg\//.test(ua) ? 'Edge' : /SamsungBrowser/.test(ua) ? 'Samsung Internet' : /CriOS|Chrome\//.test(ua) ? 'Chrome' : /FxiOS|Firefox/.test(ua) ? 'Firefox' : /Safari/.test(ua) ? 'Safari' : '不明';
+  var standalone = false;
+  try { standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; } catch (e) {}
   return { ua: ua, inApp: inApp, ios: ios, name: name, standalone: standalone, android: /Android/i.test(ua) };
 }
-var diagRunning = false;
-async function runDiagnostics() {
-  if (diagRunning) return; diagRunning = true;
-  try { await runDiagInner(); } catch (e) { logError('診断', e); $('#diagAdvice').innerHTML = '<div class="diag-advice">診断中にエラー：' + esc(errText(e)) + '</div>'; }
-  diagRunning = false;
-}
-async function runDiagInner() {
-  var items = [], br = detectBrowser();
-  function add(st, title, detail) { items.push({ st: st, title: title, detail: detail || '' }); }
-  add('info', 'アプリのバージョン', 'v' + APP_VERSION);
-  add('info', 'ブラウザ', br.name + (br.ios ? '（iOS/iPadOS）' : br.android ? '（Android）' : '（PC）') + (br.standalone ? '・ホーム画面から起動' : ''));
-  add(window.isSecureContext ? 'ok' : 'ng', 'HTTPS（安全な接続）', location.protocol + '//' + location.host);
-  add(br.inApp ? 'ng' : 'ok', 'アプリ内ブラウザではない', br.inApp ? br.inApp + 'のアプリ内ブラウザで開いています' : '通常のブラウザです');
-  var hasIDB = false, idbAccessErr = '';
-  try { hasIDB = !!window.indexedDB; } catch (e) { idbAccessErr = errText(e); }
-  add(hasIDB ? 'ok' : 'ng', 'IndexedDB（保存機能）の有無', hasIDB ? 'あり' : 'なし' + (idbAccessErr ? '（' + idbAccessErr + '）' : ''));
-  // 実際に開けるかを独立テスト
-  var idbRes = 'ng', idbDetail = '';
-  try {
-    var d = await withTimeout(openIDB(), 6000, 'IndexedDB');
-    idbRes = 'ok'; idbDetail = '開けました';
-    try { d.close(); } catch (x) {}
-  } catch (e) { idbDetail = errText(e); }
-  add(idbRes, 'IndexedDB を開くテスト', idbDetail);
-  add(store.mode === 'idb' ? (blobOK ? 'ok' : 'warn') : 'ng', '現在の保存モード',
-    store.mode === 'idb' ? ('端末に保存' + (blobOK ? '' : '（音声・動画は互換形式で保存）')) : store.mode === 'memory' ? '一時保存モード（閉じると消えます）' + (store.error ? '／' + store.error : '') : '未初期化');
-  var cookie = true; try { cookie = navigator.cookieEnabled; } catch (e) { cookie = false; }
-  add(cookie ? 'ok' : 'warn', 'サイトデータの保存許可', cookie ? '許可されています' : 'ブロックされています（「すべてのCookieをブロック」がON）');
-  var md = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-  add(md ? 'ok' : 'ng', 'マイク・カメラAPI', md ? 'あり' : 'なし（HTTPSでない／アプリ内ブラウザの可能性）');
-  var mr = !!window.MediaRecorder;
-  add(mr ? 'ok' : 'ng', '録音機能（MediaRecorder）', mr ? '音声: ' + (pickMime('audio') || '既定') + '／動画: ' + (pickMime('video') || '既定') : 'なし');
-  try {
-    if (navigator.storage && navigator.storage.estimate) {
-      var est = await navigator.storage.estimate();
-      add('info', '保存容量の目安', '使用 ' + ((est.usage || 0) / 1024 / 1024).toFixed(1) + ' MB／上限 ' + ((est.quota || 0) / 1024 / 1024 / 1024).toFixed(2) + ' GB');
-    }
-  } catch (e) {}
-  if (errorLog.length) add('warn', '最近のエラー', errorLog.slice(-5).join('\n'));
-
-  $('#diagList').innerHTML = items.map(function (i) {
+var diagRunning = false, diagItems = [];
+function diagPaint(done) {
+  var html = diagItems.map(function (i) {
     var mark = i.st === 'ok' ? '✓' : i.st === 'ng' ? '×' : i.st === 'warn' ? '!' : 'i';
-    return '<li><span class="st ' + i.st + '">' + mark + '</span><span><b>' + esc(i.title) + '</b><small style="white-space:pre-wrap">' + esc(i.detail) + '</small></span></li>';
+    return '<li><span class="st ' + i.st + '">' + mark + '</span><span><b>' + esc(i.title) + '</b><small>' + esc(i.detail) + '</small></span></li>';
   }).join('');
-
-  var advice = [];
-  if (!window.isSecureContext) advice.push('アドレスが「https://」で始まるURLで開いてください。');
-  if (br.inApp) advice.push('右上（または右下）のメニューから「Safariで開く」「ブラウザで開く」を選んでください。');
-  if (idbRes !== 'ok') {
-    if (br.ios) advice.push('iPhoneの場合：プライベートブラウズを解除し、「設定」→「Safari」→「すべてのCookieをブロック」をOFFにしてください。「設定」→「スクリーンタイム」→「コンテンツとプライバシーの制限」でWebサイトのデータ保存が制限されていないかも確認してください。ロックダウンモードがONの場合も保存が使えないことがあります。');
-    else advice.push('ブラウザの設定で「Cookieとサイトデータ」を許可し、シークレット（InPrivate）モード以外で開いてください。会社管理のスマホ／PCでは管理ポリシーで制限されている場合があります。');
-  }
-  if (store.mode === 'memory' && idbRes === 'ok') advice.push('保存機能は使えるようになっています。下の「再チェック／アプリを再起動」を押してください。');
-  $('#diagAdvice').innerHTML = advice.length ? '<div class="diag-advice"><b>対処方法</b><br>' + advice.map(esc).join('<br><br>') + '</div>'
-    : '<div class="diag-advice" style="background:var(--green-l)"><b>問題は見つかりませんでした 🎉</b></div>';
-  $('#diagRaw').value = ['はじめてのことば 診断結果', new Date().toLocaleString()].concat(items.map(function (i) { return '[' + i.st + '] ' + i.title + ': ' + i.detail.replace(/\n/g, ' | '); })).concat(['UA: ' + br.ua]).join('\n');
+  if (!done) html += '<li><span class="st info">…</span><span>チェック中…</span></li>';
+  $('#diagList').innerHTML = html;
+  $('#diagRaw').value = ['はじめてのことば 診断結果 v' + APP_VERSION, new Date().toLocaleString()]
+    .concat(diagItems.map(function (i) { return '[' + i.st + '] ' + i.title + ': ' + String(i.detail).replace(/\n/g, ' | '); }))
+    .concat(['UA: ' + (navigator.userAgent || '')]).join('\n');
 }
-$('#dgCopy').addEventListener('click', async function () {
+function dAdd(st, title, detail) { diagItems.push({ st: st, title: title, detail: detail == null ? '' : String(detail) }); try { diagPaint(false); } catch (e) {} }
+function runDiagnostics() {
+  if (diagRunning) return;
+  diagRunning = true; diagItems = [];
+  $('#diagAdvice').innerHTML = '';
+  var br = {}, idbRes = 'ng';
+  var steps = [
+    function () {
+      br = detectBrowser();
+      dAdd('info', 'アプリのバージョン', 'v' + APP_VERSION);
+      dAdd('info', 'ブラウザ', br.name + (br.ios ? '（iOS/iPadOS）' : br.android ? '（Android）' : '（PC）') + (br.standalone ? '・ホーム画面から起動' : ''));
+      dAdd(missingEls.length ? 'ng' : 'ok', '画面部品の読み込み', missingEls.length ? '見つからない部品：' + missingEls.join(', ') : 'すべて正常');
+      var errs = (window.__errs || []);
+      dAdd(errs.length ? 'warn' : 'ok', '発生したエラー', errs.length ? errs.slice(-6).join('\n') : 'なし');
+      dAdd(window.isSecureContext ? 'ok' : 'ng', 'HTTPS（安全な接続）', location.protocol + '//' + location.host);
+      dAdd(br.inApp ? 'ng' : 'ok', 'アプリ内ブラウザではない', br.inApp ? br.inApp + 'で開いています' : '通常のブラウザです');
+      var cookie = true; try { cookie = navigator.cookieEnabled; } catch (e) { cookie = false; }
+      dAdd(cookie ? 'ok' : 'warn', 'サイトデータの保存許可', cookie ? '許可されています' : 'ブロックされています');
+    },
+    function () {
+      var has = !!getIDB();
+      dAdd(has ? 'ok' : 'ng', 'IndexedDB（保存機能）の有無', has ? 'あり' : 'なし／アクセス拒否');
+      if (!has) return;
+      return withTimeout(openIDB(), 5000, 'IndexedDB').then(function (d) {
+        idbRes = 'ok'; try { d.close(); } catch (x) {}
+        dAdd('ok', 'IndexedDB を開くテスト', '開けました');
+      }, function (e) { dAdd('ng', 'IndexedDB を開くテスト', errText(e)); });
+    },
+    function () {
+      dAdd(store.mode === 'idb' ? (blobOK ? 'ok' : 'warn') : 'ng', '現在の保存モード',
+        store.mode === 'idb' ? ('端末に保存' + (blobOK ? '' : '（音声・動画は互換形式で保存）'))
+        : store.mode === 'memory' ? '一時保存モード（閉じると消えます）' + (store.error ? '\n' + store.error : '') : '初期化中');
+      var md = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+      dAdd(md ? 'ok' : 'ng', 'マイク・カメラAPI', md ? 'あり' : 'なし（HTTPSでない／アプリ内ブラウザの可能性）');
+      var mr = !!window.MediaRecorder;
+      dAdd(mr ? 'ok' : 'ng', '録音機能（MediaRecorder）', mr ? '音声: ' + (pickMime('audio') || '既定') + '／動画: ' + (pickMime('video') || '既定') : 'なし');
+    },
+    function () {
+      if (!(navigator.storage && navigator.storage.estimate)) { dAdd('info', '保存容量の目安', '取得できません'); return; }
+      return withTimeout(navigator.storage.estimate(), 3000, '容量取得').then(function (est) {
+        dAdd('info', '保存容量の目安', '使用 ' + (((est && est.usage) || 0) / 1024 / 1024).toFixed(1) + ' MB／上限 ' + (((est && est.quota) || 0) / 1024 / 1024 / 1024).toFixed(2) + ' GB');
+      }, function (e) { dAdd('warn', '保存容量の目安', errText(e)); });
+    }
+  ];
+  var i = 0;
+  function next() {
+    if (i >= steps.length) return Promise.resolve();
+    var fn = steps[i++], r;
+    try { r = fn(); } catch (e) { dAdd('ng', 'チェック中のエラー', logError('診断', e)); }
+    return Promise.resolve(r).then(null, function (e) { dAdd('ng', 'チェック中のエラー', logError('診断', e)); }).then(next);
+  }
+  withTimeout(next(), 20000, '動作環境チェック').then(null, function (e) { dAdd('ng', 'チェックが終わりませんでした', errText(e)); })
+    .then(function () {
+      try { diagPaint(true); } catch (e) {}
+      var advice = [];
+      if (missingEls.length) advice.push('画面部品が見つかりません。GitHubの index.html が途中までしかアップロードされていない可能性があります。もう一度アップロードしてください。');
+      if (!window.isSecureContext) advice.push('アドレスが「https://」で始まるURLで開いてください。');
+      if (br.inApp) advice.push('メニューから「Safariで開く」「ブラウザで開く」を選んでください。');
+      if (idbRes !== 'ok') {
+        if (br.ios) advice.push('iPhoneの場合：プライベートブラウズを解除し、「設定」→「Safari」→「すべてのCookieをブロック」をOFFにしてください。');
+        else advice.push('ブラウザの設定で「Cookieとサイトデータ」を許可し、シークレットモード以外で開いてください。会社管理の端末では制限されている場合があります。');
+      }
+      if (store.mode === 'memory' && idbRes === 'ok') advice.push('保存機能は使える状態です。「再チェック／アプリを再起動」を押してください。');
+      $('#diagAdvice').innerHTML = advice.length ? '<div class="diag-advice"><b>対処方法</b><br>' + advice.map(esc).join('<br><br>') + '</div>'
+        : '<div class="diag-advice" style="background:var(--green-l)"><b>問題は見つかりませんでした 🎉</b></div>';
+      diagRunning = false;
+    });
+}
+on('#dgCopy', 'click', function () {
   var t = $('#diagRaw').value;
-  try { await navigator.clipboard.writeText(t); toast('コピーしました'); }
-  catch (e) { $('#diagRaw').select(); try { document.execCommand('copy'); toast('コピーしました'); } catch (x) { toast('長押しでコピーしてください'); } }
+  function fallback() { try { $('#diagRaw').select(); document.execCommand('copy'); toast('コピーしました'); } catch (x) { toast('長押しでコピーしてください'); } }
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t).then(function () { toast('コピーしました'); }, fallback);
+  fallback();
 });
-$('#dgRetry').addEventListener('click', function () { location.reload(); });
-async function mediaTest(kind) {
-  var out = $('#dgMediaRes');
+on('#dgRetry', 'click', function () { location.reload(); });
+function mediaTest(kind) {
+  var out = $('#dgMediaRes'), label = kind === 'video' ? 'カメラ' : 'マイク';
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { out.textContent = '× この環境ではマイク・カメラAPIが使えません'; return; }
   out.textContent = '確認中…';
-  try {
-    var s = await navigator.mediaDevices.getUserMedia(kind === 'video' ? { video: true } : { audio: true });
+  return navigator.mediaDevices.getUserMedia(kind === 'video' ? { video: true } : { audio: true }).then(function (s) {
     s.getTracks().forEach(function (t) { t.stop(); });
-    out.textContent = '✓ ' + (kind === 'video' ? 'カメラ' : 'マイク') + 'は使えます';
-  } catch (e) { out.textContent = '× ' + (kind === 'video' ? 'カメラ' : 'マイク') + 'が使えません：' + logError('テスト' + kind, e); }
+    out.textContent = '✓ ' + label + 'は使えます';
+  }, function (e) { out.textContent = '× ' + label + 'が使えません：' + logError('テスト' + kind, e); });
 }
-$('#dgMic').addEventListener('click', function () { mediaTest('audio'); });
-$('#dgCam').addEventListener('click', function () { mediaTest('video'); });
+on('#dgMic', 'click', function () { return mediaTest('audio'); });
+on('#dgCam', 'click', function () { return mediaTest('video'); });
+on('#errClose', 'click', function () { $('#errBox').style.display = 'none'; });
 
-/* ================= イベント ================= */
-document.addEventListener('click', function (e) {
-  var play = e.target.closest('[data-play]');
-  if (play) { e.stopPropagation(); toggleInline(play.dataset.play, play); return; }
-  var open = e.target.closest('[data-open]');
-  if (open) { openDetail(open.dataset.open); return; }
-  var rc = e.target.closest('[data-rec]');
-  if (rc) { if (!child) return; openRecorder(rc.dataset.rec); return; }
-  var go = e.target.closest('[data-go]');
-  if (go) { closeOverlay(); show(go.dataset.go); return; }
-});
-$('#btnBack').addEventListener('click', goBack);
-$('#tabRec').addEventListener('click', function () { $('#ovChoice').classList.add('show'); });
+document.addEventListener('click', safe(function (e) {
+  var t = e.target;
+  if (!t || !t.closest) return;
+  var play = t.closest('[data-play]');
+  if (play) { e.stopPropagation(); toggleInline(play.getAttribute('data-play'), play); return; }
+  var open = t.closest('[data-open]');
+  if (open) { openDetail(open.getAttribute('data-open')); return; }
+  var rc = t.closest('[data-rec]');
+  if (rc) { if (!child) return toast('先にお子さまを登録してください'); return openRecorder(rc.getAttribute('data-rec')); }
+  var go = t.closest('[data-go]');
+  if (go) { closeOverlay(); show(go.getAttribute('data-go')); return; }
+}, '画面操作'));
+on('#btnBack', 'click', goBack);
+on('#tabRec', 'click', function () { $('#ovChoice').classList.add('show'); });
 function textOnly() { closeOverlay(); pending = { kind: 'text', blob: null }; openForm(); }
-$('#btnTextOnly').addEventListener('click', textOnly);
-$('#choiceText').addEventListener('click', textOnly);
+on('#btnTextOnly', 'click', textOnly);
+on('#choiceText', 'click', textOnly);
 document.addEventListener('visibilitychange', function () { if (document.hidden && rec.mr && rec.mr.state === 'recording') stopRec(); });
 
-/* ================= 起動 ================= */
-(async function boot() {
-  await initStorage();               // 失敗しても一時保存モードで続行
-  try { await loadAll(); }
-  catch (e) { toast('データ読み込みエラー：' + logError('データ読み込み', e)); child = null; words = []; }
-  show(child ? 'home' : 'onboard', false);
-  if (store.mode === 'memory') toast('保存領域が使えないため一時保存モードで起動しました');
-})().catch(function (e) {
-  logError('起動', e);
-  show('diag', false);
-});
+initStorage()
+  .then(function () { return withTimeout(loadAll(), 6000, 'データ読み込み'); })
+  .then(null, function (e) { toast('データ読み込みエラー：' + logError('データ読み込み', e)); child = null; words = []; })
+  .then(function () {
+    show(child ? 'home' : 'onboard', false);
+    if (missingEls.length) logError('画面部品', new Error('見つからない部品: ' + missingEls.join(', ')));
+    if (store.mode === 'memory') toast('保存領域が使えないため一時保存モードで起動しました');
+  })
+  .then(null, function (e) { logError('起動', e); try { show('diag', false); } catch (x) {} });
 })();
 </script>
 
