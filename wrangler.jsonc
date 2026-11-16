@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hajimete-kotoba",
+  "compatibility_date": "2026-11-16",
+  "assets": {
+    "directory": ".",
+    "not_found_handling": "single-page-application"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hajimete-kotoba-db",
+      "database_id": "56852eb0-090c-4521-8589-4bb61530976e"
+    }
+  ]
+}
