@@ -44,7 +44,7 @@ const PBKDF2_ITERATIONS = 100000;
 };
  async function health(_req, env) {
   const result = await env.DB.prepare("SELECT 1 AS ok").first();
-  return json({ status: "ok", database: result?.ok === 1, version: "0.3.1" });
+  return json({ status: "ok", database: result?.ok === 1, version: "0.3.2" });
 }
  async function register(req, env) {
   const b = await body(req);
