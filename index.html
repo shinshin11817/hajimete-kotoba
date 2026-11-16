@@ -9,7 +9,7 @@
 <meta content="yes" name="mobile-web-app-capable">
 <meta content="はじめてのことば" name="apple-mobile-web-app-title">
 <meta content="notranslate" name="google">
-<title>はじめてのことば v0.2.2</title>
+<title>はじめてのことば v0.2.3</title>
 <meta content="0.2.2" name="app-version">
 <style>
 :root{
@@ -175,7 +175,7 @@ main{flex:1;padding:6px 18px calc(110px + var(--safe-b))}
 :focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 </style>
 <script>
-/* v0.2.2：アプリ本体より先に読み込み、どんなエラーも行番号付きで画面に出す */
+/* v0.2.3：アプリ本体より先に読み込み、どんなエラーも行番号付きで画面に出す */
 window.__errs = [];
 window.__pushErr = function (msg) {
   window.__errs.push(msg);
@@ -196,7 +196,7 @@ window.addEventListener('error', function (ev) {
   <header class="topbar">
     <button aria-label="戻る" id="btnBack" class="back"><svg stroke-linejoin="round" stroke-linecap="round" stroke-width="2.6" stroke="currentColor" fill="none" viewBox="0 0 24 24" height="20" width="20"><path d="M15 18l-6-6 6-6"></path></svg></button>
     <h1 id="appTitle">はじめてのことば</h1>
-    <span class="ver">v0.2.2</span>
+    <span class="ver">v0.2.3</span>
   </header>
   <div id="errBox"><b>エラー詳細（この内容を送ってください）</b><pre></pre><button id="errClose" type="button">閉じる</button></div>
   <div id="memWarn" class="memwarn">⚠️ この端末では保存領域が使えないため、<b>一時保存モード</b>で動いています。ページを閉じると記録は消えます。 <button data-go="diag" type="button">原因を見る</button></div>
@@ -245,6 +245,15 @@ window.addEventListener('error', function (ev) {
         </button>
       </div>
       <button id="btnTextOnly" class="textlink">録れなかった…文字だけで残す</button>
+      <div style="margin-top:18px;padding:14px" class="card">
+        <button type="button" id="btnImportMedia" class="btn btn-ghost">
+          <svg stroke-linejoin="round" stroke-linecap="round" stroke-width="2.2" stroke="currentColor" fill="none" viewBox="0 0 24 24" height="21" width="21"><path d="M12 3v12M7 10l5 5 5-5"></path><path d="M5 21h14"></path></svg>
+          過去の動画・音声を取り込む
+        </button>
+        <input hidden="" multiple="" accept="video/*,audio/*" id="importMediaInput" type="file">
+        <p style="margin:8px 2px 0;text-align:center" class="muted">写真・ファイルから選択できます。複数選択も可能です。</p>
+      </div>
+      <div style="display:none;margin:10px 2px;text-align:center" class="muted" id="importProgress"></div>
       <div id="firstWordBox"></div>
       <div class="sec-head"><h3>最近のことば</h3><button data-go="timeline">年表を見る →</button></div>
       <div id="recentList"></div>
@@ -273,6 +282,7 @@ window.addEventListener('error', function (ev) {
 
     <section id="scr-form" class="screen">
       <div id="formMedia"></div>
+      <div style="display:none;margin:8px 2px 0;text-align:center" class="muted" id="importFileInfo"></div>
       <label for="fWord" class="label">なんて言った？</label>
       <input autocomplete="off" maxlength="40" placeholder="例：わんわん" id="fWord" class="input word-input">
       <label for="fDate" class="label">いつ？</label>
@@ -326,7 +336,7 @@ window.addEventListener('error', function (ev) {
         <button style="margin-top:12px" data-go="diag" class="btn btn-ghost">動作環境チェック</button>
         <button style="margin-top:10px" id="stReset" class="btn btn-danger">すべての記録を削除</button>
       </div>
-      <p style="text-align:center;margin-top:20px" class="muted">はじめてのことば v0.2.2 prototype</p>
+      <p style="text-align:center;margin-top:20px" class="muted">はじめてのことば v0.2.3 prototype</p>
     </section>
 
     <section id="scr-diag" class="screen">
@@ -378,7 +388,7 @@ window.addEventListener('error', function (ev) {
 <script>
 (function () {
 'use strict';
-var APP_VERSION = '0.2.2';
+var APP_VERSION = '0.2.3';
 
 var missingEls = [];
 function $opt(s, el) { try { return (el || document).querySelector(s); } catch (e) { return null; } }
@@ -545,6 +555,7 @@ var child = null, words = [];
 var current = 'loading', navStack = [];
 var tlFilter = 'all', tlAsc = true, tlQuery = '';
 var pending = null;
+var importQueue = [], importTotal = 0, importIndex = 0;
 
 function ageMonths(birth, date) {
   if (!birth || !date) return null;
@@ -825,6 +836,9 @@ function openForm() {
   show('form');
   if (formUrl) { URL.revokeObjectURL(formUrl); formUrl = null; }
   var box = $('#formMedia');
+  var info = $('#importFileInfo');
+  if (pending && pending.fromLibrary) { info.style.display = ''; info.textContent = '取り込み中 ' + importIndex + ' / ' + importTotal + '：' + pending.name; }
+  else { info.style.display = 'none'; info.textContent = ''; }
   if (pending && pending.blob) {
     formUrl = URL.createObjectURL(pending.blob);
     box.innerHTML = pending.kind === 'video'
@@ -832,7 +846,7 @@ function openForm() {
       : '<div class="media-mini audio"><audio src="' + formUrl + '" controls></audio></div>';
   } else box.innerHTML = '<div class="media-mini text">✏️ 文字だけで記録します</div>';
   $('#fWord').value = ''; $('#fMemo').value = '';
-  $('#fDate').value = todayStr(); $('#fDate').max = todayStr();
+  var suggestedDate = pending && pending.suggestedDate ? pending.suggestedDate : todayStr(); $('#fDate').value = suggestedDate; $('#fDate').max = todayStr();
   $('#fFirst').checked = true; $('#fFav').checked = false;
   $$('.chip', $('#fToward')).forEach(function (x) { x.classList.remove('on'); });
   $$('.chip', $('#fCat')).forEach(function (x) { x.classList.remove('on'); });
@@ -869,9 +883,14 @@ on('#btnSave', 'click', function () {
       if (formUrl) { URL.revokeObjectURL(formUrl); formUrl = null; }
       $('#formMedia').innerHTML = '';
       if (navigator.vibrate) navigator.vibrate(40);
-      navStack = [];
-      show('timeline');
       toast('「' + word + '」を残しました 🎉');
+      if (importQueue.length) {
+        setTimeout(function () { openNextImportedFile(); }, 350);
+      } else {
+        importTotal = 0; importIndex = 0;
+        $('#importProgress').style.display = 'none';
+        navStack = []; show('timeline');
+      }
     });
   }).then(null, function (e) {
     toast('保存に失敗しました：' + logError('ことば保存', e));
@@ -1130,6 +1149,45 @@ on('#dgMic', 'click', function () { return mediaTest('audio'); });
 on('#dgCam', 'click', function () { return mediaTest('video'); });
 on('#errClose', 'click', function () { $('#errBox').style.display = 'none'; });
 
+/* ================= 過去の動画・音声を取り込む ================= */
+function fileDate(file) {
+  var d = file && file.lastModified ? new Date(file.lastModified) : new Date();
+  if (isNaN(d.getTime()) || d > new Date()) d = new Date();
+  return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+}
+function mediaKind(file) {
+  var t = (file.type || '').toLowerCase(), n = (file.name || '').toLowerCase();
+  if (t.indexOf('video/') === 0 || /\.(mp4|mov|m4v|webm|avi)$/i.test(n)) return 'video';
+  if (t.indexOf('audio/') === 0 || /\.(m4a|mp3|wav|aac|ogg|opus|webm)$/i.test(n)) return 'audio';
+  return '';
+}
+function openNextImportedFile() {
+  if (!importQueue.length) { importTotal = 0; importIndex = 0; $('#importProgress').style.display = 'none'; show('timeline'); return; }
+  var file = importQueue.shift(), kind = mediaKind(file);
+  importIndex++;
+  $('#importProgress').style.display = '';
+  $('#importProgress').textContent = importIndex + ' / ' + importTotal + ' 件を登録中';
+  pending = { kind: kind, blob: file, name: file.name || ('過去の' + (kind === 'video' ? '動画' : '音声')), suggestedDate: fileDate(file), fromLibrary: true };
+  openForm();
+}
+on('#btnImportMedia', 'click', function () {
+  var input = $('#importMediaInput'); input.value = ''; input.click();
+});
+on('#importMediaInput', 'change', function (e) {
+  var selected = Array.prototype.slice.call((e.target && e.target.files) || []);
+  var valid = [], tooLarge = 0, unsupported = 0;
+  selected.forEach(function (f) {
+    if (!mediaKind(f)) { unsupported++; return; }
+    if (f.size > 200 * 1024 * 1024) { tooLarge++; return; }
+    valid.push(f);
+  });
+  if (!valid.length) return toast(tooLarge ? '200MB以下の動画・音声を選んでください' : '対応する動画・音声を選んでください');
+  importQueue = valid; importTotal = valid.length; importIndex = 0;
+  if (unsupported) toast(unsupported + '件の未対応ファイルを除外しました');
+  else if (tooLarge) toast(tooLarge + '件の200MB超ファイルを除外しました');
+  openNextImportedFile();
+});
+
 document.addEventListener('click', safe(function (e) {
   var t = e.target;
   if (!t || !t.closest) return;
@@ -1144,7 +1202,7 @@ document.addEventListener('click', safe(function (e) {
 }, '画面操作'));
 on('#btnBack', 'click', goBack);
 on('#tabRec', 'click', function () { $('#ovChoice').classList.add('show'); });
-function textOnly() { closeOverlay(); pending = { kind: 'text', blob: null }; openForm(); }
+function textOnly() { closeOverlay(); importQueue = []; importTotal = 0; importIndex = 0; pending = { kind: 'text', blob: null }; openForm(); }
 on('#btnTextOnly', 'click', textOnly);
 on('#choiceText', 'click', textOnly);
 document.addEventListener('visibilitychange', function () { if (document.hidden && rec.mr && rec.mr.state === 'recording') stopRec(); });
