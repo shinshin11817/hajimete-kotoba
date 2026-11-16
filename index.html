@@ -1,0 +1,911 @@
+<!DOCTYPE html><html lang="ja"><head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' data: blob: https:; style-src 'unsafe-inline' https: data:; font-src https: data: blob:; img-src data: blob: https://miro.com https://*.miro.com; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-ancestors https://miro.com https://*.miro.com;">
+
+<meta charset="UTF-8">
+<meta content="width=device-width,initial-scale=1,viewport-fit=cover" name="viewport">
+<meta content="#FFF6EE" name="theme-color">
+<meta content="yes" name="apple-mobile-web-app-capable">
+<meta content="yes" name="mobile-web-app-capable">
+<meta content="はじめてのことば" name="apple-mobile-web-app-title">
+<title>はじめてのことば v0.1</title>
+<style>
+:root{
+  --bg:#FFF6EE; --card:#FFFFFF; --ink:#3B2F2A; --sub:#8A7A72; --line:#F0E2D6;
+  --accent:#FF8A65; --accent-d:#F06A45; --accent-l:#FFE3D8;
+  --green:#6CC4A1; --green-l:#DDF3EA; --blue:#7FB3E8; --blue-l:#E2EEFA;
+  --yellow:#FFD166; --danger:#E5534B;
+  --radius:22px; --shadow:0 6px 20px rgba(120,80,50,.08);
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:#EFE4DA}
+body{font-family:"Hiragino Maru Gothic ProN","Hiragino Sans","Yu Gothic UI","Yu Gothic",system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+#app{max-width:480px;margin:0 auto;min-height:100%;background:var(--bg);position:relative;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,0,0,.06)}
+.topbar{position:sticky;top:0;z-index:20;padding:calc(12px + var(--safe-t)) 20px 10px;background:rgba(255,246,238,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:center;gap:10px}
+.topbar h1{font-size:17px;margin:0;font-weight:800;letter-spacing:.04em;flex:1}
+.topbar .ver{font-size:11px;color:var(--sub);background:#fff;border-radius:99px;padding:3px 9px;border:1px solid var(--line)}
+.back{width:38px;height:38px;border-radius:50%;background:#fff;border:1px solid var(--line);display:none;align-items:center;justify-content:center}
+.back.show{display:flex}
+main{flex:1;padding:6px 18px calc(110px + var(--safe-b))}
+.screen{display:none;animation:fade .25s ease}
+.screen.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* cards & common */
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.muted{color:var(--sub);font-size:13px}
+.label{font-size:13px;font-weight:700;margin:18px 2px 8px;display:block}
+.input,.textarea{width:100%;border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:13px 14px;font-size:16px;outline:none;transition:border .15s}
+.input:focus,.textarea:focus{border-color:var(--accent)}
+.textarea{min-height:90px;resize:vertical}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px;border-radius:16px;font-weight:800;font-size:16px;transition:transform .1s,opacity .15s}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 6px 16px rgba(255,138,101,.35)}
+.btn-ghost{background:#fff;border:1.5px solid var(--line)}
+.btn-danger{background:#fff;border:1.5px solid #F3C7C4;color:var(--danger)}
+.btn:disabled{opacity:.45}
+.row{display:flex;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:9px 14px;border-radius:99px;background:#fff;border:1.5px solid var(--line);font-size:14px;font-weight:700;transition:all .15s}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip:active{transform:scale(.95)}
+.empty{text-align:center;padding:36px 10px;color:var(--sub);font-size:14px;line-height:1.8}
+.empty .big{font-size:44px;display:block;margin-bottom:6px}
+
+/* onboarding */
+.ob-hero{text-align:center;padding:30px 10px 10px}
+.ob-hero .bubble{width:120px;height:120px;margin:0 auto 18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFD9C9,#FF9F7E);display:flex;align-items:center;justify-content:center;font-size:56px;box-shadow:0 14px 30px rgba(255,138,101,.35)}
+.ob-hero h2{font-size:24px;margin:0 0 10px}
+.ob-hero p{color:var(--sub);font-size:14px;line-height:1.8;margin:0}
+
+/* home */
+.hero{background:linear-gradient(135deg,#FFB494,#FF8A65);color:#fff;border-radius:26px;padding:22px;position:relative;overflow:hidden;box-shadow:0 10px 26px rgba(255,138,101,.35)}
+.hero::after{content:"";position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.15)}
+.hero .name{font-size:22px;font-weight:800}
+.hero .age{font-size:14px;opacity:.95;margin-top:2px}
+.stats{display:flex;gap:8px;margin-top:16px;position:relative;z-index:1}
+.stat{flex:1;background:rgba(255,255,255,.22);border-radius:14px;padding:10px;text-align:center}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:11px;opacity:.95}
+.cta-title{font-size:18px;font-weight:800;margin:24px 2px 12px}
+.cta-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cta{background:#fff;border-radius:22px;padding:20px 10px;text-align:center;box-shadow:var(--shadow);transition:transform .1s}
+.cta:active{transform:scale(.96)}
+.cta .ic{width:64px;height:64px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center}
+.cta.audio .ic{background:var(--accent-l);color:var(--accent-d)}
+.cta.video .ic{background:var(--blue-l);color:#3F84CC}
+.cta b{font-size:15px;display:block}
+.cta small{color:var(--sub);font-size:11px}
+.textlink{display:block;margin:14px auto 0;color:var(--sub);font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.first-word{margin-top:22px;display:flex;align-items:center;gap:14px}
+.first-word .medal{width:52px;height:52px;flex:none;border-radius:50%;background:#FFF1C9;display:flex;align-items:center;justify-content:center;font-size:26px}
+.first-word .w{font-size:20px;font-weight:800}
+.sec-head{display:flex;justify-content:space-between;align-items:center;margin:26px 2px 10px}
+.sec-head h3{margin:0;font-size:16px}
+.sec-head button{color:var(--accent-d);font-size:13px;font-weight:700}
+
+/* word item */
+.item{display:flex;align-items:center;gap:12px;background:#fff;border-radius:18px;padding:14px;box-shadow:var(--shadow);margin-bottom:10px;width:100%;text-align:left}
+.item:active{transform:scale(.99)}
+.item .type{width:44px;height:44px;flex:none;border-radius:14px;display:flex;align-items:center;justify-content:center}
+.type.audio{background:var(--accent-l);color:var(--accent-d)}
+.type.video{background:var(--blue-l);color:#3F84CC}
+.type.text{background:var(--green-l);color:#3E9A76}
+.item .body{flex:1;min-width:0}
+.item .word{font-size:18px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .meta{font-size:12px;color:var(--sub);margin-top:2px}
+.item .fav{color:#F5B400;font-size:16px}
+.play{width:42px;height:42px;flex:none;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 10px rgba(255,138,101,.35)}
+.play.playing{background:var(--ink)}
+.badge{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px;background:#FFF1C9;color:#9A6B00;margin-left:6px;vertical-align:middle}
+
+/* timeline */
+.tl-filters{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 10px;scrollbar-width:none}
+.tl-filters::-webkit-scrollbar{display:none}
+.tl-filters .chip{white-space:nowrap}
+.tl-tools{display:flex;justify-content:space-between;align-items:center;margin:2px 2px 8px}
+.tl-tools button{font-size:13px;font-weight:700;color:var(--accent-d)}
+.tl-group{position:relative;padding-left:26px;margin-top:8px}
+.tl-group::before{content:"";position:absolute;left:8px;top:6px;bottom:-8px;width:3px;border-radius:3px;background:var(--line)}
+.tl-age{position:relative;font-weight:800;font-size:14px;color:var(--accent-d);margin:12px 0 10px}
+.tl-age::before{content:"";position:absolute;left:-24px;top:3px;width:13px;height:13px;border-radius:50%;background:var(--accent);border:3px solid var(--bg);box-shadow:0 0 0 2px var(--accent)}
+
+/* record */
+.rec-stage{background:#2B2320;border-radius:26px;aspect-ratio:3/4;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.rec-stage.audio{background:linear-gradient(160deg,#FFE3D8,#FFF6EE);aspect-ratio:1/1}
+.rec-stage video{width:100%;height:100%;object-fit:cover;background:#000}
+.rec-stage audio{width:86%}
+.meter{width:150px;height:150px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 0 0 0 rgba(255,138,101,.4);transition:box-shadow .08s linear}
+.rec-timer{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);color:#fff;font-size:14px;font-weight:800;padding:6px 14px;border-radius:99px;display:flex;align-items:center;gap:8px;font-variant-numeric:tabular-nums}
+.rec-stage.audio .rec-timer{background:rgba(59,47,42,.75)}
+.rec-dot{width:9px;height:9px;border-radius:50%;background:#FF4D4D;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.2}}
+.flip{position:absolute;right:12px;bottom:12px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;display:flex;align-items:center;justify-content:center}
+.rec-ctrl{display:flex;justify-content:center;align-items:center;margin:22px 0 8px}
+.shutter{width:84px;height:84px;border-radius:50%;border:5px solid #fff;background:#FF4D4D;box-shadow:0 0 0 3px #FF4D4D,0 8px 20px rgba(255,77,77,.4);transition:all .2s}
+.shutter.recording{border-radius:26px;transform:scale(.82)}
+.shutter:disabled{opacity:.4}
+.rec-hint{text-align:center;font-size:13px;color:var(--sub)}
+.rec-msg{background:#FFF1C9;color:#7A5A00;border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.7;margin-bottom:12px}
+.fallback{margin-top:16px}
+.fallback label{display:flex}
+.fallback input{display:none}
+
+/* form */
+.media-mini{border-radius:18px;overflow:hidden;background:#000}
+.media-mini video{width:100%;max-height:260px;display:block;background:#000}
+.media-mini.audio{background:var(--accent-l);padding:14px}
+.media-mini audio{width:100%}
+.media-mini.text{background:var(--green-l);padding:14px;color:#3E9A76;font-weight:700;font-size:14px;text-align:center}
+.word-input{font-size:26px;font-weight:800;text-align:center;padding:16px}
+.toggle-row{display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:16px;padding:14px 16px;border:1.5px solid var(--line);margin-top:10px}
+.switch{position:relative;width:52px;height:30px;flex:none}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;background:#DDD3CB;border-radius:99px;transition:.2s}
+.switch span::before{content:"";position:absolute;width:24px;height:24px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 2px 4px rgba(0,0,0,.15)}
+.switch input:checked+span{background:var(--accent)}
+.switch input:checked+span::before{transform:translateX(22px)}
+.age-preview{text-align:center;margin-top:8px;font-size:13px;color:var(--accent-d);font-weight:700}
+
+/* tabbar */
+.tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;z-index:30;background:rgba(255,255,255,.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line);display:flex;padding:8px 10px calc(8px + var(--safe-b))}
+.tabbar.hide{display:none}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;color:#B5A69D;padding:4px 0}
+.tab.on{color:var(--accent-d)}
+.tab-rec{flex:none;width:58px;height:58px;margin:-26px 10px 0;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 18px rgba(255,138,101,.45);border:4px solid var(--bg)}
+
+/* sheet */
+.overlay{position:fixed;inset:0;background:rgba(40,28,22,.45);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.overlay.show{display:flex;animation:fadeo .2s}
+@keyframes fadeo{from{opacity:0}}
+.sheet{background:var(--bg);width:100%;max-width:480px;max-height:92vh;overflow-y:auto;border-radius:28px 28px 0 0;padding:10px 18px calc(22px + var(--safe-b));animation:up .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{transform:translateY(40px);opacity:.4}}
+.grab{width:42px;height:5px;border-radius:5px;background:#DCCFC5;margin:4px auto 14px}
+.d-word{text-align:center;font-size:34px;font-weight:800;margin:16px 0 4px}
+.d-meta{text-align:center;color:var(--sub);font-size:13px}
+.d-info{display:grid;grid-template-columns:auto 1fr;gap:10px 14px;margin-top:16px;font-size:14px}
+.d-info dt{color:var(--sub);font-weight:700}
+.d-info dd{margin:0;white-space:pre-wrap;word-break:break-word}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+
+.toast{position:fixed;left:50%;bottom:calc(96px + var(--safe-b));transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:99px;font-size:14px;font-weight:700;opacity:0;pointer-events:none;transition:all .25s;z-index:80;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.setting-list .toggle-row{cursor:default}
+.storage-bar{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin-top:8px}
+.storage-bar i{display:block;height:100%;background:var(--green);width:0}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topbar">
+    <button aria-label="戻る" id="btnBack" class="back"><svg stroke-linejoin="round" stroke-linecap="round" stroke-width="2.6" stroke="currentColor" fill="none" viewBox="0 0 24 24" height="20" width="20"><path d="M15 18l-6-6 6-6"></path></svg></button>
+    <h1>はじめてのことば</h1>
+    <span class="ver">v0.1</span>
+  </header>
+
+  <main>
+    
+    <section id="scr-onboard" class="screen">
+      <div class="ob-hero">
+        <div class="bubble">💬</div>
+        <h2>はじめてのことば</h2>
+        <p>子どもが初めて話した言葉を、<br>声や動画と一緒に残していきましょう。<br>記録はこの端末の中だけに保存されます。</p>
+      </div>
+      <div style="margin-top:22px" class="card">
+        <label style="margin-top:0" for="obName" class="label">お子さまの名前（ニックネーム可）</label>
+        <input autocomplete="off" maxlength="20" placeholder="例：はると" id="obName" class="input">
+        <label for="obBirth" class="label">生年月日</label>
+        <input type="date" id="obBirth" class="input">
+        <p style="margin:8px 2px 0" class="muted">月齢を自動で計算するために使います。</p>
+        <button style="margin-top:20px" id="obStart" class="btn btn-primary">はじめる</button>
+      </div>
+    </section>
+
+    
+    <section id="scr-home" class="screen">
+      <div class="hero">
+        <div id="hName" class="name">—</div>
+        <div id="hAge" class="age">—</div>
+        <div class="stats">
+          <div class="stat"><b id="sAll">0</b><span>ことば</span></div>
+          <div class="stat"><b id="sAudio">0</b><span>音声</span></div>
+          <div class="stat"><b id="sVideo">0</b><span>動画</span></div>
+        </div>
+      </div>
+
+      <div class="cta-title">今日のことばを残す</div>
+      <div class="cta-grid">
+        <button data-rec="audio" class="cta audio">
+          <div class="ic"><svg stroke-linecap="round" stroke-width="2.2" stroke="currentColor" fill="none" viewBox="0 0 24 24" height="30" width="30"><rect rx="3" height="11" width="6" y="3" x="9"></rect><path d="M5 11a7 7 0 0014 0M12 18v3"></path></svg></div>
+          <b>音声で残す</b><small>最大60秒</small>
+        </button>
+        <button data-rec="video" class="cta video">
+          <div class="ic"><svg stroke-linejoin="round" stroke-linecap="round" stroke-width="2.2" stroke="currentColor" fill="none" viewBox="0 0 24 24" height="30" width="30"><rect rx="3" height="12" width="13" y="6" x="3"></rect><path d="M16 10l5-3v10l-5-3z"></path></svg></div>
+          <b>動画で残す</b><small>最大30秒</small>
+        </button>
+      </div>
+      <button id="btnTextOnly" class="textlink">録れなかった…文字だけで残す</button>
+
+      <div id="firstWordBox"></div>
+
+      <div class="sec-head"><h3>最近のことば</h3><button data-go="timeline">年表を見る →</button></div>
+      <div id="recentList"></div>
+    </section>
+
+    
+    <section id="scr-record" class="screen">
+      <div id="recMsg"></div>
+      <div id="recStage" class="rec-stage"></div>
+      <div id="recLive">
+        <div class="rec-ctrl"><button aria-label="録音開始" id="btnShutter" class="shutter"></button></div>
+        <p id="recHint" class="rec-hint">ボタンを押すと記録がはじまります</p>
+      </div>
+      <div style="display:none" id="recAfter">
+        <div style="margin-top:18px" class="row">
+          <button id="btnRetake" class="btn btn-ghost">撮り直す</button>
+          <button id="btnUse" class="btn btn-primary">この記録を使う</button>
+        </div>
+      </div>
+      <div id="recFallback" class="fallback">
+        <label id="fbLabel" class="btn btn-ghost">
+          <span id="fbText">端末のカメラ／ボイスメモで残す</span>
+          <input id="fbInput" type="file">
+        </label>
+      </div>
+    </section>
+
+    
+    <section id="scr-form" class="screen">
+      <div id="formMedia"></div>
+      <label for="fWord" class="label">なんて言った？</label>
+      <input autocomplete="off" maxlength="40" placeholder="例：わんわん" id="fWord" class="input word-input">
+
+      <label for="fDate" class="label">いつ？</label>
+      <input type="date" id="fDate" class="input">
+      <div id="fAge" class="age-preview"></div>
+
+      <span class="label">誰に向かって？</span>
+      <div data-single="" id="fToward" class="chips"></div>
+
+      <span class="label">どんなことば？</span>
+      <div data-single="" id="fCat" class="chips"></div>
+
+      <label for="fMemo" class="label">どんな時？（メモ）</label>
+      <textarea maxlength="400" placeholder="例：散歩中、犬を見て突然言った！" id="fMemo" class="textarea"></textarea>
+
+      <div class="toggle-row"><span><b>はじめて言った！</b><br><span class="muted">初めて聞いた日の記録</span></span>
+        <label class="switch"><input checked="" id="fFirst" type="checkbox"><span></span></label></div>
+      <div class="toggle-row"><span><b>お気に入り</b></span>
+        <label class="switch"><input id="fFav" type="checkbox"><span></span></label></div>
+
+      <button style="margin-top:22px" id="btnSave" class="btn btn-primary">保存する</button>
+    </section>
+
+    
+    <section id="scr-timeline" class="screen">
+      <input style="margin-bottom:10px" placeholder="🔍 ことばを探す" id="tlSearch" class="input">
+      <div id="tlFilters" class="tl-filters">
+        <button data-f="all" class="chip on">すべて</button>
+        <button data-f="first" class="chip">はじめて</button>
+        <button data-f="fav" class="chip">★ お気に入り</button>
+        <button data-f="audio" class="chip">音声</button>
+        <button data-f="video" class="chip">動画</button>
+        <button data-f="text" class="chip">文字のみ</button>
+      </div>
+      <div class="tl-tools"><span id="tlCount" class="muted"></span><button id="tlSort">古い順 ↓</button></div>
+      <div id="tlList"></div>
+    </section>
+
+    
+    <section id="scr-settings" class="screen">
+      <div class="card">
+        <b>お子さま</b>
+        <label for="stName" class="label">名前</label>
+        <input maxlength="20" id="stName" class="input">
+        <label for="stBirth" class="label">生年月日</label>
+        <input type="date" id="stBirth" class="input">
+        <button style="margin-top:16px" id="stSave" class="btn btn-primary">変更を保存</button>
+      </div>
+      <div style="margin-top:14px" class="card">
+        <b>保存容量</b>
+        <p style="margin:8px 0 0" id="stStorage" class="muted">計算中…</p>
+        <div class="storage-bar"><i id="stBar"></i></div>
+        <p style="margin:12px 0 0;line-height:1.7" class="muted">記録はこのブラウザ内（IndexedDB）に保存されます。ブラウザのデータ削除や機種変更で消える場合があります（クラウド保存はv0.2以降）。</p>
+        <button style="margin-top:12px" id="stPersist" class="btn btn-ghost">データを消えにくくする</button>
+      </div>
+      <div style="margin-top:14px" class="card">
+        <b>データ</b>
+        <button style="margin-top:12px" id="stReset" class="btn btn-danger">すべての記録を削除</button>
+      </div>
+      <p style="text-align:center;margin-top:20px" class="muted">はじめてのことば v0.1 prototype</p>
+    </section>
+  </main>
+
+  <nav id="tabbar" class="tabbar hide">
+    <button data-go="home" class="tab"><svg stroke-linejoin="round" stroke-linecap="round" stroke-width="2.2" stroke="currentColor" fill="none" viewBox="0 0 24 24" height="24" width="24"><path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"></path></svg>ホーム</button>
+    <button data-go="timeline" class="tab"><svg stroke-linecap="round" stroke-width="2.2" stroke="currentColor" fill="none" viewBox="0 0 24 24" height="24" width="24"><circle r="2" cy="6" cx="6"></circle><circle r="2" cy="18" cx="6"></circle><path d="M6 8v8M11 6h9M11 18h9M11 12h6"></path></svg>年表</button>
+    <button aria-label="記録する" id="tabRec" class="tab-rec"><svg stroke-linecap="round" stroke-width="2.6" stroke="currentColor" fill="none" viewBox="0 0 24 24" height="28" width="28"><path d="M12 5v14M5 12h14"></path></svg></button>
+    <button data-go="settings" class="tab"><svg stroke-linejoin="round" stroke-linecap="round" stroke-width="2.2" stroke="currentColor" fill="none" viewBox="0 0 24 24" height="24" width="24"><circle r="4" cy="8" cx="12"></circle><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg>こども</button>
+    <button aria-hidden="true" tabindex="-1" style="visibility:hidden" id="tabDummy" class="tab">.</button>
+  </nav>
+</div>
+
+
+<div id="ovDetail" class="overlay"><div id="detailSheet" class="sheet"></div></div>
+
+<div id="ovChoice" class="overlay"><div class="sheet">
+  <div class="grab"></div>
+  <h3 style="text-align:center;margin:4px 0 14px">どうやって残す？</h3>
+  <div class="choice">
+    <button data-rec="audio" class="cta audio"><div class="ic"><svg stroke-linecap="round" stroke-width="2.2" stroke="currentColor" fill="none" viewBox="0 0 24 24" height="28" width="28"><rect rx="3" height="11" width="6" y="3" x="9"></rect><path d="M5 11a7 7 0 0014 0M12 18v3"></path></svg></div><b>音声</b></button>
+    <button data-rec="video" class="cta video"><div class="ic"><svg stroke-linejoin="round" stroke-linecap="round" stroke-width="2.2" stroke="currentColor" fill="none" viewBox="0 0 24 24" height="28" width="28"><rect rx="3" height="12" width="13" y="6" x="3"></rect><path d="M16 10l5-3v10l-5-3z"></path></svg></div><b>動画</b></button>
+  </div>
+  <button style="margin-top:12px" id="choiceText" class="btn btn-ghost">文字だけで残す</button>
+</div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+const fmtDate = s => { if (!s) return ''; const [y,m,d] = s.split('-'); return `${y}年${+m}月${+d}日`; };
+const ICON = {
+  audio:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>',
+  video:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="13" height="12" rx="3"/><path d="M16 10l5-3v10l-5-3z"/></svg>',
+  text:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>',
+  play:'<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+  stop:'<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>',
+  flip:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-4l-2-3h-4L8 7H4v12h16z"/><path d="M9 13a3 3 0 015-2l1 1M15 13a3 3 0 01-5 2l-1-1"/></svg>',
+  mic:'<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>'
+};
+const TYPE_LABEL = { audio:'音声', video:'動画', text:'文字のみ' };
+const TOWARD = ['ママ','パパ','きょうだい','じいじ・ばあば','ひとりごと','その他'];
+const CATS = ['人','食べもの','動物','乗りもの','あいさつ','気持ち','動作','その他'];
+const LIMIT = { audio:60, video:30 };
+
+/* ---------- IndexedDB ---------- */
+let db;
+function openDB() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('hajimete-kotoba', 1);
+    r.onupgradeneeded = () => {
+      const d = r.result;
+      if (!d.objectStoreNames.contains('children')) d.createObjectStore('children', { keyPath:'id' });
+      if (!d.objectStoreNames.contains('words')) d.createObjectStore('words', { keyPath:'id' }).createIndex('childId', 'childId');
+    };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  });
+}
+function tx(store, mode, fn) {
+  return new Promise((res, rej) => {
+    const t = db.transaction(store, mode), req = fn(t.objectStore(store));
+    let out; if (req) req.onsuccess = () => { out = req.result; };
+    t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+  });
+}
+const dbAll = s => tx(s, 'readonly', st => st.getAll());
+const dbPut = (s, v) => tx(s, 'readwrite', st => st.put(v));
+const dbDel = (s, id) => tx(s, 'readwrite', st => st.delete(id));
+const dbClear = s => tx(s, 'readwrite', st => st.clear());
+
+/* ---------- state ---------- */
+let child = null, words = [];
+let current = 'home', history = [];
+let tlFilter = 'all', tlAsc = true, tlQuery = '';
+let pending = null; // {kind, blob}
+
+/* ---------- age ---------- */
+function ageMonths(birth, date) {
+  if (!birth || !date) return null;
+  const b = new Date(birth + 'T00:00:00'), d = new Date(date + 'T00:00:00');
+  let m = (d.getFullYear() - b.getFullYear()) * 12 + (d.getMonth() - b.getMonth());
+  if (d.getDate() < b.getDate()) m--;
+  return m;
+}
+function ageLabel(m) {
+  if (m == null) return '';
+  if (m < 0) return '生まれる前';
+  const y = Math.floor(m / 12), mm = m % 12;
+  return y ? `${y}歳${mm}か月` : `${mm}か月`;
+}
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2000); }
+
+/* ---------- router ---------- */
+const TITLES = { onboard:'はじめてのことば', home:'はじめてのことば', record:'記録する', form:'ことばを登録', timeline:'ことば年表', settings:'こどもの設定' };
+const TAB_SCREENS = ['home','timeline','settings'];
+function show(name, push = true) {
+  if (current === 'record' && name !== 'record') cleanupRecorder();
+  if (push && current !== name && !TAB_SCREENS.includes(name)) history.push(current);
+  if (TAB_SCREENS.includes(name)) history = [];
+  current = name;
+  $$('.screen').forEach(s => s.classList.toggle('active', s.id === 'scr-' + name));
+  $('#title').textContent = TITLES[name] || '';
+  $('#btnBack').classList.toggle('show', !TAB_SCREENS.includes(name) && name !== 'onboard');
+  $('#tabbar').classList.toggle('hide', !TAB_SCREENS.includes(name));
+  $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.go === name));
+  stopInlineAudio();
+  if (name === 'home') renderHome();
+  if (name === 'timeline') renderTimeline();
+  if (name === 'settings') renderSettings();
+  window.scrollTo(0, 0);
+}
+function goBack() {
+  const prev = history.pop() || 'home';
+  if (current === 'form' && prev === 'record') { show('home', false); return; }
+  show(prev, false);
+}
+
+/* ---------- data ---------- */
+async function loadAll() {
+  const kids = await dbAll('children');
+  child = kids[0] || null;
+  words = child ? (await dbAll('words')).filter(w => w.childId === child.id) : [];
+}
+const sortByDate = (a, b) => (a.spokenAt.localeCompare(b.spokenAt)) || (a.createdAt - b.createdAt);
+
+/* ---------- onboarding ---------- */
+$('#obBirth').max = todayStr();
+$('#obStart').addEventListener('click', async () => {
+  const name = $('#obName').value.trim(), birth = $('#obBirth').value;
+  if (!name) return toast('名前を入力してください');
+  if (!birth) return toast('生年月日を入力してください');
+  child = { id: uid(), name, birthday: birth, createdAt: Date.now() };
+  await dbPut('children', child);
+  words = [];
+  show('home');
+  toast(`${name}ちゃんの記録をはじめます`);
+});
+
+/* ---------- home ---------- */
+function itemHTML(w) {
+  const playBtn = w.type === 'audio' ? `<span class="play" data-play="${w.id}" role="button" aria-label="再生">${ICON.play}</span>` : '';
+  return `<button class="item" data-open="${w.id}">
+    <span class="type ${w.type}">${ICON[w.type]}</span>
+    <span class="body">
+      <span class="word">「${esc(w.word)}」${w.first ? '<span class="badge">はじめて</span>' : ''}</span>
+      <span class="meta">${ageLabel(w.ageMonths)}・${fmtDate(w.spokenAt)}${w.toward ? '・' + esc(w.toward) + 'に' : ''}</span>
+    </span>
+    ${w.favorite ? '<span class="fav">★</span>' : ''}${playBtn}
+  </button>`;
+}
+function renderHome() {
+  if (!child) return;
+  $('#hName').textContent = `${child.name}ちゃん`;
+  $('#hAge').textContent = `いま ${ageLabel(ageMonths(child.birthday, todayStr()))}`;
+  $('#sAll').textContent = words.length;
+  $('#sAudio').textContent = words.filter(w => w.type === 'audio').length;
+  $('#sVideo').textContent = words.filter(w => w.type === 'video').length;
+  const sorted = [...words].sort(sortByDate);
+  const first = sorted.find(w => w.first) || sorted[0];
+  $('#firstWordBox').innerHTML = first ? `<button class="card first-word" data-open="${first.id}" style="width:100%;text-align:left">
+      <span class="medal">🏅</span>
+      <span><span class="muted">${esc(child.name)}ちゃんの はじめてのことば</span><br>
+      <span class="w">「${esc(first.word)}」</span> <span class="muted">${ageLabel(first.ageMonths)}</span></span></button>` : '';
+  const recent = [...words].sort((a, b) => b.createdAt - a.createdAt).slice(0, 3);
+  $('#recentList').innerHTML = recent.length ? recent.map(itemHTML).join('')
+    : `<div class="empty"><span class="big">🌱</span>まだ記録がありません。<br>最初のことばを残してみましょう。</div>`;
+}
+
+/* ---------- recorder ---------- */
+const rec = { kind:null, stream:null, mr:null, chunks:[], blob:null, timer:null, start:0, facing:'environment', actx:null, raf:null, url:null };
+function pickMime(kind) {
+  if (!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+  const list = kind === 'video'
+    ? ['video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm']
+    : ['audio/mp4','audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'];
+  return list.find(m => { try { return MediaRecorder.isTypeSupported(m); } catch (e) { return false; } }) || '';
+}
+function stopStream() {
+  if (rec.stream) rec.stream.getTracks().forEach(t => t.stop());
+  rec.stream = null;
+  if (rec.raf) cancelAnimationFrame(rec.raf); rec.raf = null;
+  if (rec.actx) { rec.actx.close().catch(() => {}); rec.actx = null; }
+}
+function cleanupRecorder() {
+  clearInterval(rec.timer);
+  if (rec.mr && rec.mr.state !== 'inactive') { rec.mr.onstop = null; try { rec.mr.stop(); } catch (e) {} }
+  stopStream();
+  if (rec.url) { URL.revokeObjectURL(rec.url); rec.url = null; }
+  $('#recStage').innerHTML = '';
+}
+function setRecMsg(msg) { $('#recMsg').innerHTML = msg ? `<div class="rec-msg">${msg}</div>` : ''; }
+function fmtSec(s) { return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
+
+async function openRecorder(kind) {
+  closeOverlay();
+  show('record');
+  cleanupRecorder();
+  rec.kind = kind; rec.blob = null; rec.chunks = [];
+  $('#title').textContent = kind === 'video' ? '動画で残す' : '音声で残す';
+  const stage = $('#recStage');
+  stage.className = 'rec-stage ' + kind;
+  $('#recLive').style.display = '';
+  $('#recAfter').style.display = 'none';
+  $('#recFallback').style.display = '';
+  setRecMsg('');
+  const shutter = $('#btnShutter');
+  shutter.classList.remove('recording'); shutter.disabled = true;
+  $('#recHint').textContent = `ボタンを押すと記録がはじまります（最大${LIMIT[kind]}秒）`;
+  const fb = $('#fbInput');
+  fb.value = '';
+  fb.accept = kind === 'video' ? 'video/*' : 'audio/*';
+  if (kind === 'video') fb.setAttribute('capture', 'environment'); else fb.removeAttribute('capture');
+  $('#fbText').textContent = kind === 'video' ? '端末のカメラで撮る／動画を選ぶ' : '端末の録音アプリ／音声ファイルを選ぶ';
+
+  stage.innerHTML = kind === 'video'
+    ? `<video id="live" playsinline muted autoplay></video><button class="flip" id="btnFlip" aria-label="カメラ切替">${ICON.flip}</button>`
+    : `<div class="meter" id="meter">${ICON.mic}</div>`;
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+    setRecMsg('この環境ではアプリ内での録音・撮影が使えません（HTTPSでの公開が必要です）。下のボタンから端末の機能で記録できます。');
+    return;
+  }
+  await startStream();
+  if (kind === 'video') $('#btnFlip')?.addEventListener('click', async () => {
+    if (rec.mr && rec.mr.state === 'recording') return;
+    rec.facing = rec.facing === 'environment' ? 'user' : 'environment';
+    stopStream(); await startStream();
+  });
+}
+async function startStream() {
+  const kind = rec.kind;
+  try {
+    rec.stream = await navigator.mediaDevices.getUserMedia(kind === 'video'
+      ? { video: { facingMode: rec.facing, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true }
+      : { audio: { echoCancellation: true, noiseSuppression: false } });
+    if (current !== 'record' || rec.kind !== kind) { stopStream(); return; }
+    if (kind === 'video') {
+      const v = $('#live'); v.srcObject = rec.stream; v.play().catch(() => {});
+      v.style.transform = rec.facing === 'user' ? 'scaleX(-1)' : '';
+    } else startMeter();
+    $('#btnShutter').disabled = false;
+  } catch (e) {
+    setRecMsg('カメラ／マイクが使えませんでした。ブラウザの設定で許可してから「撮り直す」を押すか、下のボタンから端末の機能で記録してください。');
+  }
+}
+function startMeter() {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    rec.actx = new AC();
+    const src = rec.actx.createMediaStreamSource(rec.stream), an = rec.actx.createAnalyser();
+    an.fftSize = 512; src.connect(an);
+    const data = new Uint8Array(an.fftSize), meter = $('#meter');
+    const loop = () => {
+      an.getByteTimeDomainData(data);
+      let sum = 0; for (const v of data) { const x = (v - 128) / 128; sum += x * x; }
+      const lv = Math.min(1, Math.sqrt(sum / data.length) * 5);
+      if (meter) meter.style.boxShadow = `0 0 0 ${Math.round(lv * 40)}px rgba(255,138,101,.28)`;
+      rec.raf = requestAnimationFrame(loop);
+    };
+    loop();
+  } catch (e) {}
+}
+function startRec() {
+  if (!rec.stream) return;
+  rec.chunks = [];
+  const mime = pickMime(rec.kind);
+  try { rec.mr = mime ? new MediaRecorder(rec.stream, { mimeType: mime }) : new MediaRecorder(rec.stream); }
+  catch (e) { rec.mr = new MediaRecorder(rec.stream); }
+  rec.mr.ondataavailable = e => { if (e.data && e.data.size) rec.chunks.push(e.data); };
+  rec.mr.onstop = onRecStop;
+  rec.mr.start(250);
+  rec.start = Date.now();
+  const sh = $('#btnShutter'); sh.classList.add('recording'); sh.setAttribute('aria-label', '停止');
+  $('#btnFlip') && ($('#btnFlip').style.display = 'none');
+  $('#recFallback').style.display = 'none';
+  const timerEl = document.createElement('div');
+  timerEl.className = 'rec-timer'; timerEl.innerHTML = `<span class="rec-dot"></span><span id="tSec">0:00</span> / ${fmtSec(LIMIT[rec.kind])}`;
+  $('#recStage').appendChild(timerEl);
+  $('#recHint').textContent = 'もう一度押すと停止します';
+  navigator.vibrate && navigator.vibrate(30);
+  rec.timer = setInterval(() => {
+    const s = Math.floor((Date.now() - rec.start) / 1000);
+    const el = $('#tSec'); if (el) el.textContent = fmtSec(s);
+    if (s >= LIMIT[rec.kind]) stopRec();
+  }, 200);
+}
+function stopRec() {
+  clearInterval(rec.timer);
+  if (rec.mr && rec.mr.state !== 'inactive') rec.mr.stop();
+  navigator.vibrate && navigator.vibrate([20, 40, 20]);
+}
+function onRecStop() {
+  const type = (rec.mr && rec.mr.mimeType) || (rec.chunks[0] && rec.chunks[0].type) || (rec.kind === 'video' ? 'video/webm' : 'audio/webm');
+  const blob = new Blob(rec.chunks, { type: type.split(';')[0] });
+  stopStream();
+  if (!blob.size) { toast('うまく記録できませんでした'); openRecorder(rec.kind); return; }
+  showRecPreview(blob);
+}
+function showRecPreview(blob) {
+  rec.blob = blob;
+  if (rec.url) URL.revokeObjectURL(rec.url);
+  rec.url = URL.createObjectURL(blob);
+  const stage = $('#recStage');
+  stage.innerHTML = rec.kind === 'video'
+    ? `<video src="${rec.url}" controls playsinline></video>`
+    : `<audio src="${rec.url}" controls></audio>`;
+  $('#recLive').style.display = 'none';
+  $('#recAfter').style.display = '';
+  $('#recFallback').style.display = 'none';
+  setRecMsg('');
+}
+$('#btnShutter').addEventListener('click', () => {
+  if (rec.mr && rec.mr.state === 'recording') stopRec(); else startRec();
+});
+$('#btnRetake').addEventListener('click', () => openRecorder(rec.kind));
+$('#btnUse').addEventListener('click', () => {
+  if (!rec.blob) return;
+  pending = { kind: rec.kind, blob: rec.blob };
+  openForm();
+});
+$('#fbInput').addEventListener('change', e => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  const isVideo = f.type.startsWith('video'), isAudio = f.type.startsWith('audio');
+  if (!isVideo && !isAudio) return toast('音声か動画のファイルを選んでください');
+  if (f.size > 200 * 1024 * 1024) return toast('ファイルが大きすぎます（200MBまで）');
+  stopStream();
+  rec.kind = isVideo ? 'video' : 'audio';
+  $('#recStage').className = 'rec-stage ' + rec.kind;
+  showRecPreview(f);
+});
+
+/* ---------- form ---------- */
+function buildChips(el, list) {
+  el.innerHTML = list.map(v => `<button type="button" class="chip" data-v="${esc(v)}">${esc(v)}</button>`).join('');
+}
+function chipValue(el) { const c = $('.chip.on', el); return c ? c.dataset.v : ''; }
+['#fToward', '#fCat'].forEach(sel => {
+  $(sel).addEventListener('click', e => {
+    const c = e.target.closest('.chip'); if (!c) return;
+    const was = c.classList.contains('on');
+    $$('.chip', $(sel)).forEach(x => x.classList.remove('on'));
+    if (!was) c.classList.add('on');
+  });
+});
+buildChips($('#fToward'), TOWARD);
+buildChips($('#fCat'), CATS);
+let formUrl = null;
+function openForm() {
+  show('form');
+  if (formUrl) { URL.revokeObjectURL(formUrl); formUrl = null; }
+  const box = $('#formMedia');
+  if (pending.blob) {
+    formUrl = URL.createObjectURL(pending.blob);
+    box.innerHTML = pending.kind === 'video'
+      ? `<div class="media-mini"><video src="${formUrl}" controls playsinline></video></div>`
+      : `<div class="media-mini audio"><audio src="${formUrl}" controls></audio></div>`;
+  } else box.innerHTML = `<div class="media-mini text">✏️ 文字だけで記録します</div>`;
+  $('#fWord').value = ''; $('#fMemo').value = '';
+  $('#fDate').value = todayStr(); $('#fDate').max = todayStr();
+  $('#fFirst').checked = true; $('#fFav').checked = false;
+  $$('.chip', $('#fToward')).forEach(x => x.classList.remove('on'));
+  $$('.chip', $('#fCat')).forEach(x => x.classList.remove('on'));
+  updateFormAge();
+  setTimeout(() => $('#fWord').focus(), 250);
+}
+function updateFormAge() {
+  const m = ageMonths(child.birthday, $('#fDate').value);
+  $('#fAge').textContent = m == null ? '' : `この日の${esc(child.name)}ちゃん：${ageLabel(m)}`;
+}
+$('#fDate').addEventListener('change', updateFormAge);
+$('#btnSave').addEventListener('click', async () => {
+  const word = $('#fWord').value.trim();
+  if (!word) { toast('「なんて言った？」を入力してください'); $('#fWord').focus(); return; }
+  const spokenAt = $('#fDate').value || todayStr();
+  const btn = $('#btnSave'); btn.disabled = true;
+  const entry = {
+    id: uid(), childId: child.id, word, spokenAt,
+    ageMonths: ageMonths(child.birthday, spokenAt),
+    toward: chipValue($('#fToward')), category: chipValue($('#fCat')),
+    memo: $('#fMemo').value.trim(),
+    first: $('#fFirst').checked, favorite: $('#fFav').checked,
+    type: pending.blob ? pending.kind : 'text',
+    mime: pending.blob ? pending.blob.type : '',
+    size: pending.blob ? pending.blob.size : 0,
+    blob: pending.blob || null,
+    createdAt: Date.now(), updatedAt: Date.now()
+  };
+  try {
+    await dbPut('words', entry);
+    words.push(entry);
+    pending = null;
+    if (formUrl) { URL.revokeObjectURL(formUrl); formUrl = null; }
+    $('#formMedia').innerHTML = '';
+    navigator.vibrate && navigator.vibrate(40);
+    show('timeline');
+    toast(`「${word}」を残しました 🎉`);
+  } catch (e) {
+    toast('保存に失敗しました（容量不足の可能性）');
+  } finally { btn.disabled = false; }
+});
+
+/* ---------- timeline ---------- */
+$('#tlFilters').addEventListener('click', e => {
+  const c = e.target.closest('.chip'); if (!c) return;
+  tlFilter = c.dataset.f;
+  $$('.chip', $('#tlFilters')).forEach(x => x.classList.toggle('on', x === c));
+  renderTimeline();
+});
+$('#tlSort').addEventListener('click', () => { tlAsc = !tlAsc; renderTimeline(); });
+$('#tlSearch').addEventListener('input', e => { tlQuery = e.target.value.trim(); renderTimeline(); });
+function renderTimeline() {
+  $('#tlSort').textContent = tlAsc ? '古い順 ↓' : '新しい順 ↑';
+  let list = words.filter(w => {
+    if (tlFilter === 'fav' && !w.favorite) return false;
+    if (tlFilter === 'first' && !w.first) return false;
+    if (['audio','video','text'].includes(tlFilter) && w.type !== tlFilter) return false;
+    if (tlQuery && !(w.word + ' ' + (w.memo || '') + ' ' + (w.category || '')).includes(tlQuery)) return false;
+    return true;
+  }).sort(sortByDate);
+  if (!tlAsc) list.reverse();
+  $('#tlCount').textContent = `${list.length} 件のことば`;
+  if (!list.length) {
+    $('#tlList').innerHTML = words.length
+      ? `<div class="empty"><span class="big">🔍</span>条件に合うことばがありません</div>`
+      : `<div class="empty"><span class="big">📖</span>ここに「ことば年表」ができていきます。<br>下の ＋ から最初のことばを残しましょう。</div>`;
+    return;
+  }
+  const groups = [];
+  list.forEach(w => {
+    const key = ageLabel(w.ageMonths);
+    const g = groups[groups.length - 1];
+    if (g && g.key === key) g.items.push(w); else groups.push({ key, items: [w] });
+  });
+  $('#tlList').innerHTML = groups.map(g => `<div class="tl-group"><div class="tl-age">${g.key}</div>${g.items.map(itemHTML).join('')}</div>`).join('');
+}
+
+/* ---------- inline audio ---------- */
+let inline = { audio:null, url:null, id:null };
+function stopInlineAudio() {
+  if (inline.audio) { inline.audio.pause(); inline.audio = null; }
+  if (inline.url) { URL.revokeObjectURL(inline.url); inline.url = null; }
+  $$('.play.playing').forEach(p => { p.classList.remove('playing'); p.innerHTML = ICON.play; });
+  inline.id = null;
+}
+function toggleInline(id, btn) {
+  const same = inline.id === id;
+  stopInlineAudio();
+  if (same) return;
+  const w = words.find(x => x.id === id); if (!w || !w.blob) return;
+  inline.url = URL.createObjectURL(w.blob);
+  inline.audio = new Audio(inline.url); inline.id = id;
+  btn.classList.add('playing'); btn.innerHTML = ICON.stop;
+  inline.audio.onended = stopInlineAudio;
+  inline.audio.play().catch(() => { stopInlineAudio(); toast('再生できませんでした'); });
+}
+
+/* ---------- detail ---------- */
+let detailUrl = null;
+function openDetail(id) {
+  stopInlineAudio();
+  const w = words.find(x => x.id === id); if (!w) return;
+  if (detailUrl) URL.revokeObjectURL(detailUrl);
+  detailUrl = w.blob ? URL.createObjectURL(w.blob) : null;
+  const media = w.type === 'video' ? `<div class="media-mini"><video src="${detailUrl}" controls playsinline autoplay></video></div>`
+    : w.type === 'audio' ? `<div class="media-mini audio"><audio src="${detailUrl}" controls autoplay></audio></div>` : '';
+  const rows = [
+    ['種類', TYPE_LABEL[w.type]],
+    w.toward && ['誰に', w.toward],
+    w.category && ['分類', w.category],
+    w.memo && ['メモ', w.memo],
+    w.size && ['サイズ', (w.size / 1024 / 1024).toFixed(1) + ' MB']
+  ].filter(Boolean);
+  $('#detailSheet').innerHTML = `<div class="grab"></div>${media}
+    <div class="d-word">「${esc(w.word)}」</div>
+    <div class="d-meta">${ageLabel(w.ageMonths)}・${fmtDate(w.spokenAt)}${w.first ? '<span class="badge">はじめて</span>' : ''}</div>
+    <dl class="d-info">${rows.map(r => `<dt>${r[0]}</dt><dd>${esc(r[1])}</dd>`).join('')}</dl>
+    <div class="row" style="margin-top:22px">
+      <button class="btn btn-ghost" id="dFav">${w.favorite ? '★ お気に入り解除' : '☆ お気に入り'}</button>
+      <button class="btn btn-danger" id="dDel" style="flex:.6">削除</button>
+    </div>
+    <button class="btn btn-ghost" id="dClose" style="margin-top:10px">閉じる</button>`;
+  $('#ovDetail').classList.add('show');
+  $('#dClose').onclick = closeOverlay;
+  $('#dFav').onclick = async () => {
+    w.favorite = !w.favorite; w.updatedAt = Date.now();
+    await dbPut('words', w);
+    $('#dFav').textContent = w.favorite ? '★ お気に入り解除' : '☆ お気に入り';
+    refreshCurrent();
+  };
+  $('#dDel').onclick = async () => {
+    if (!confirm(`「${w.word}」の記録を削除しますか？\n元に戻せません。`)) return;
+    await dbDel('words', w.id);
+    words = words.filter(x => x.id !== w.id);
+    closeOverlay(); refreshCurrent(); toast('削除しました');
+  };
+}
+function closeOverlay() {
+  $$('.overlay').forEach(o => o.classList.remove('show'));
+  $$('#detailSheet video, #detailSheet audio').forEach(m => m.pause());
+  if (detailUrl) { URL.revokeObjectURL(detailUrl); detailUrl = null; }
+  $('#detailSheet').innerHTML = '';
+}
+function refreshCurrent() { if (current === 'home') renderHome(); if (current === 'timeline') renderTimeline(); }
+$$('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) closeOverlay(); }));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeOverlay(); });
+
+/* ---------- settings ---------- */
+async function renderSettings() {
+  $('#stName').value = child.name; $('#stBirth').value = child.birthday; $('#stBirth').max = todayStr();
+  const used = words.reduce((s, w) => s + (w.size || 0), 0);
+  let txt = `記録メディア：${(used / 1024 / 1024).toFixed(1)} MB（${words.length}件）`, pct = 0;
+  try {
+    if (navigator.storage && navigator.storage.estimate) {
+      const est = await navigator.storage.estimate();
+      if (est.quota) { pct = Math.min(100, est.usage / est.quota * 100); txt += `／ブラウザ使用量 ${(est.usage/1024/1024).toFixed(1)} MB・上限目安 ${(est.quota/1024/1024/1024).toFixed(1)} GB`; }
+    }
+    if (navigator.storage && navigator.storage.persisted && await navigator.storage.persisted()) {
+      $('#stPersist').textContent = '✓ 消えにくい設定になっています'; $('#stPersist').disabled = true;
+    }
+  } catch (e) {}
+  $('#stStorage').textContent = txt;
+  $('#stBar').style.width = Math.max(pct, used ? 2 : 0) + '%';
+}
+$('#stSave').addEventListener('click', async () => {
+  const name = $('#stName').value.trim(), birth = $('#stBirth').value;
+  if (!name || !birth) return toast('名前と生年月日を入力してください');
+  child.name = name; child.birthday = birth;
+  await dbPut('children', child);
+  for (const w of words) { w.ageMonths = ageMonths(birth, w.spokenAt); await dbPut('words', w); }
+  toast('保存しました');
+});
+$('#stPersist').addEventListener('click', async () => {
+  if (!(navigator.storage && navigator.storage.persist)) return toast('このブラウザは未対応です');
+  const ok = await navigator.storage.persist();
+  toast(ok ? '消えにくい設定にしました' : '許可されませんでした（ホーム画面に追加すると通りやすくなります）');
+  renderSettings();
+});
+$('#stReset').addEventListener('click', async () => {
+  if (!confirm('すべての記録とお子さまの情報を削除します。\n元に戻せません。よろしいですか？')) return;
+  await dbClear('words'); await dbClear('children');
+  child = null; words = [];
+  $('#obName').value = ''; $('#obBirth').value = '';
+  show('onboard'); toast('すべて削除しました');
+});
+
+/* ---------- global events ---------- */
+document.addEventListener('click', e => {
+  const play = e.target.closest('[data-play]');
+  if (play) { e.stopPropagation(); toggleInline(play.dataset.play, play); return; }
+  const open = e.target.closest('[data-open]');
+  if (open) { openDetail(open.dataset.open); return; }
+  const rc = e.target.closest('[data-rec]');
+  if (rc) { openRecorder(rc.dataset.rec); return; }
+  const go = e.target.closest('[data-go]');
+  if (go) { show(go.dataset.go); return; }
+});
+$('#btnBack').addEventListener('click', goBack);
+$('#tabRec').addEventListener('click', () => $('#ovChoice').classList.add('show'));
+const textOnly = () => { closeOverlay(); pending = { kind: 'text', blob: null }; history.push(current); openForm(); };
+$('#btnTextOnly').addEventListener('click', textOnly);
+$('#choiceText').addEventListener('click', textOnly);
+document.addEventListener('visibilitychange', () => { if (document.hidden && rec.mr && rec.mr.state === 'recording') stopRec(); });
+
+/* ---------- boot ---------- */
+(async () => {
+  try {
+    db = await openDB();
+    await loadAll();
+    show(child ? 'home' : 'onboard', false);
+  } catch (e) {
+    document.querySelector('main').innerHTML = '<div class="empty"><span class="big">⚠️</span>このブラウザでは保存機能が使えません。<br>プライベートブラウズを解除してお試しください。</div>';
+  }
+})();
+})();
+</script>
+
+
+</body></html>
